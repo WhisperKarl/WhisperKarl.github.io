@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html >
+<head>
+
+    <!--[if lt IE 9]>
+        <style>body {display: none; background: none !important} </style>
+        <meta http-equiv="Refresh" Content="0; url=//outdatedbrowser.com/" />
+    <![endif]-->
+
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="format-detection" content="telephone=no" />
+<meta name="author" content="Karl" />
+
+
+
+<meta name="description" content="SDWebImage的缓存器SDImageCache是SDWebImage的重要部件之一，它是一个单例类，完成了对图片的内存缓存、异步磁盘缓存、图片缓存查询等功能，这也是其优秀性能的原因所在，即下载过的图片将被缓存到内存和本地磁盘，当再次请求相同图片时直接从缓存中提取图片，从而大大提高了加载速度。SDWebImage的作者对核心方法都做了比较好的注释，这也大大提高了我们的阅读速度，我们先来看看头文">
+<meta name="keywords" content="iOS">
+<meta property="og:type" content="article">
+<meta property="og:title" content="SDWebImage源码（二）——SDImageCache缓存器">
+<meta property="og:url" content="http://www.whisperkarl.com/2016/12/09/SDWebImage源码（二）——SDImageCache缓存器/index.html">
+<meta property="og:site_name" content="Karl的开发随笔">
+<meta property="og:description" content="SDWebImage的缓存器SDImageCache是SDWebImage的重要部件之一，它是一个单例类，完成了对图片的内存缓存、异步磁盘缓存、图片缓存查询等功能，这也是其优秀性能的原因所在，即下载过的图片将被缓存到内存和本地磁盘，当再次请求相同图片时直接从缓存中提取图片，从而大大提高了加载速度。SDWebImage的作者对核心方法都做了比较好的注释，这也大大提高了我们的阅读速度，我们先来看看头文">
+<meta property="og:updated_time" content="2017-05-17T01:03:32.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="SDWebImage源码（二）——SDImageCache缓存器">
+<meta name="twitter:description" content="SDWebImage的缓存器SDImageCache是SDWebImage的重要部件之一，它是一个单例类，完成了对图片的内存缓存、异步磁盘缓存、图片缓存查询等功能，这也是其优秀性能的原因所在，即下载过的图片将被缓存到内存和本地磁盘，当再次请求相同图片时直接从缓存中提取图片，从而大大提高了加载速度。SDWebImage的作者对核心方法都做了比较好的注释，这也大大提高了我们的阅读速度，我们先来看看头文">
+
+<link rel="apple-touch-icon" href= "/apple-touch-icon.png">
+
+
+    <link rel="alternate" href="/atom.xml" title="Karl的开发随笔" type="application/atom+xml">
+
+
+
+    <link rel="shortcut icon" href="/favicon.png">
+
+
+
+    <link href="//cdn.bootcss.com/animate.css/3.5.1/animate.min.css" rel="stylesheet">
+
+
+
+    <link href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.min.css" rel="stylesheet">
+
+
+
+    <script src="//cdn.bootcss.com/pace/1.0.2/pace.min.js"></script>
+    <link href="//cdn.bootcss.com/pace/1.0.2/themes/blue/pace-theme-minimal.css" rel="stylesheet">
+
+
+<link rel="stylesheet" href="/css/style.css">
+
+
+
+<link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+
+
+<title>SDWebImage源码（二）——SDImageCache缓存器 | Karl的开发随笔</title>
+
+<script src="//cdn.bootcss.com/jquery/2.2.4/jquery.min.js"></script>
+<script src="//cdn.bootcss.com/clipboard.js/1.5.10/clipboard.min.js"></script>
+
+<script>
+    var yiliaConfig = {
+        fancybox: true,
+        animate: true,
+        isHome: false,
+        isPost: true,
+        isArchive: false,
+        isTag: false,
+        isCategory: false,
+        fancybox_js: "//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.min.js",
+        scrollreveal: "//cdn.bootcss.com/scrollReveal.js/3.1.4/scrollreveal.min.js",
+        search: undefined
+    }
+</script>
+
+
+    <script>
+        yiliaConfig.jquery_ui = [true, "//cdn.bootcss.com/jqueryui/1.10.4/jquery-ui.min.js", "//cdn.bootcss.com/jqueryui/1.10.4/css/jquery-ui.min.css"];
+    </script>
+
+
+
+    <script> yiliaConfig.rootUrl = "\/";</script>
+
+
+
+
+
+
+</head>
+<body>
+  <div id="container">
+    <div class="left-col">
+    <div class="overlay"></div>
+<div class="intrude-less">
+    <header id="header" class="inner">
+        <a href="/" class="profilepic">
+            <img src="/img/avatar.png" class="animated zoomIn">
+        </a>
+        <hgroup>
+          <h1 class="header-author"><a href="/">Karl</a></h1>
+        </hgroup>
+
+        
+        <p class="header-subtitle">一个程序员的自我修行</p>
+        
+
+        
+
+
+        
+
+        <div id="switch-area" class="switch-area">
+            <div class="switch-wrap">
+                <section class="switch-part switch-part1">
+                    <nav class="header-menu">
+                        <ul>
+                        
+                            <li><a href="/">主页</a></li>
+                        
+                            <li><a href="/archives/">所有文章</a></li>
+                        
+                            <li><a href="/tags/">标签云</a></li>
+                        
+                            <li><a href="/about/">关于我</a></li>
+                        
+                        </ul>
+                    </nav>
+                    <nav class="header-nav">
+                        <ul class="social">
+                            
+                                <a class="fa 新浪微博" href="http://weibo.com/1659245264/profile?rightmod=1&wvr=6&mod=personinfo&is_all=1" title="新浪微博"></a>
+                            
+                                <a class="fa GitHub" href="https://github.com/WhisperKarl" title="GitHub"></a>
+                            
+                                <a class="fa 简书" href="http://www.jianshu.com/users/d6b23f5aa337/latest_articles" title="简书"></a>
+                            
+                        </ul>
+                    </nav>
+                </section>
+                
+                
+                
+                
+                <section class="switch-part switch-part3">
+                    <div id="js-friends">
+                    
+                      <a class="main-nav-link switch-friends-link" href="https://hexo.io">Hexo</a>
+                    
+                      <a class="main-nav-link switch-friends-link" href="https://pages.github.com/">GitHub</a>
+                    
+                      <a class="main-nav-link switch-friends-link" href="http://moxfive.xyz/">MOxFIVE</a>
+                    
+                    </div>
+                </section>
+                
+
+                
+            </div>
+        </div>
+    </header>                
+</div>
+    </div>
+    <div class="mid-col">
+      <nav id="mobile-nav">
+      <div class="overlay">
+          <div class="slider-trigger"></div>
+          <h1 class="header-author js-mobile-header hide"><a href="/" title="回到主页">Karl</a></h1>
+      </div>
+    <div class="intrude-less">
+        <header id="header" class="inner">
+            <a href="/" class="profilepic">
+                <img src="/img/avatar.png" class="animated zoomIn">
+            </a>
+            <hgroup>
+              <h1 class="header-author"><a href="/" title="回到主页">Karl</a></h1>
+            </hgroup>
+            
+            <p class="header-subtitle">一个程序员的自我修行</p>
+            
+            <nav class="header-menu">
+                <ul>
+                
+                    <li><a href="/">主页</a></li>
+                
+                    <li><a href="/archives/">所有文章</a></li>
+                
+                    <li><a href="/tags/">标签云</a></li>
+                
+                    <li><a href="/about/">关于我</a></li>
+                
+                <div class="clearfix"></div>
+                </ul>
+            </nav>
+            <nav class="header-nav">
+                        <ul class="social">
+                            
+                                <a class="fa 新浪微博" target="_blank" href="http://weibo.com/1659245264/profile?rightmod=1&wvr=6&mod=personinfo&is_all=1" title="新浪微博"></a>
+                            
+                                <a class="fa GitHub" target="_blank" href="https://github.com/WhisperKarl" title="GitHub"></a>
+                            
+                                <a class="fa 简书" target="_blank" href="http://www.jianshu.com/users/d6b23f5aa337/latest_articles" title="简书"></a>
+                            
+                        </ul>
+            </nav>
+        </header>                
+    </div>
+    <link class="menu-list" tags="标签" friends="友情链接" about="关于我"/>
+</nav>
+      <div class="body-wrap"><article id="post-SDWebImage源码（二）——SDImageCache缓存器" class="article article-type-post" itemscope itemprop="blogPost">
+  
+    <div class="article-meta">
+      <a href="/2016/12/09/SDWebImage源码（二）——SDImageCache缓存器/" class="article-date">
+      <time datetime="2016-12-09T08:16:58.000Z" itemprop="datePublished">2016-12-09</time>
+</a>
+
+
+    </div>
+  
+  <div class="article-inner">
+    
+      <input type="hidden" class="isFancy" />
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      SDWebImage源码（二）——SDImageCache缓存器
+    </h1>
+  
+
+      </header>
+      
+      <div class="article-info article-info-post">
+        
+    <div class="article-category tagcloud">
+    <a class="article-category-link" href="/categories/programming/">编程</a>
+    </div>
+
+
+        
+    <div class="article-tag tagcloud">
+        <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/iOS/">iOS</a></li></ul>
+    </div>
+
+        <div class="clearfix"></div>
+      </div>
+      
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+          
+        <h4 id="SDWebImage的缓存器"><a href="#SDWebImage的缓存器" class="headerlink" title="SDWebImage的缓存器"></a>SDWebImage的缓存器</h4><p><code>SDImageCache</code>是<code>SDWebImage</code>的重要部件之一，它是一个单例类，完成了对图片的内存缓存、异步磁盘缓存、图片缓存查询等功能，这也是其优秀性能的原因所在，即下载过的图片将被缓存到内存和本地磁盘，当再次请求相同图片时直接从缓存中提取图片，从而大大提高了加载速度。<code>SDWebImage</code>的作者对核心方法都做了比较好的注释，这也大大提高了我们的阅读速度，我们先来看看头文件里的内容。<br><a id="more"></a><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div><div class="line">111</div><div class="line">112</div><div class="line">113</div><div class="line">114</div><div class="line">115</div><div class="line">116</div><div class="line">117</div><div class="line">118</div><div class="line">119</div><div class="line">120</div><div class="line">121</div><div class="line">122</div><div class="line">123</div><div class="line">124</div><div class="line">125</div><div class="line">126</div><div class="line">127</div><div class="line">128</div><div class="line">129</div><div class="line">130</div><div class="line">131</div><div class="line">132</div><div class="line">133</div><div class="line">134</div><div class="line">135</div><div class="line">136</div><div class="line">137</div><div class="line">138</div><div class="line">139</div><div class="line">140</div><div class="line">141</div><div class="line">142</div><div class="line">143</div><div class="line">144</div><div class="line">145</div><div class="line">146</div><div class="line">147</div><div class="line">148</div><div class="line">149</div><div class="line">150</div><div class="line">151</div><div class="line">152</div><div class="line">153</div><div class="line">154</div><div class="line">155</div><div class="line">156</div><div class="line">157</div><div class="line">158</div><div class="line">159</div><div class="line">160</div><div class="line">161</div><div class="line">162</div><div class="line">163</div><div class="line">164</div><div class="line">165</div><div class="line">166</div><div class="line">167</div><div class="line">168</div><div class="line">169</div><div class="line">170</div><div class="line">171</div><div class="line">172</div><div class="line">173</div><div class="line">174</div><div class="line">175</div><div class="line">176</div><div class="line">177</div><div class="line">178</div><div class="line">179</div><div class="line">180</div><div class="line">181</div><div class="line">182</div><div class="line">183</div><div class="line">184</div><div class="line">185</div><div class="line">186</div><div class="line">187</div><div class="line">188</div><div class="line">189</div><div class="line">190</div><div class="line">191</div><div class="line">192</div><div class="line">193</div><div class="line">194</div><div class="line">195</div><div class="line">196</div><div class="line">197</div><div class="line">198</div><div class="line">199</div><div class="line">200</div><div class="line">201</div><div class="line">202</div><div class="line">203</div><div class="line">204</div><div class="line">205</div><div class="line">206</div><div class="line">207</div><div class="line">208</div><div class="line">209</div><div class="line">210</div><div class="line">211</div><div class="line">212</div><div class="line">213</div><div class="line">214</div><div class="line">215</div><div class="line">216</div><div class="line">217</div><div class="line">218</div><div class="line">219</div><div class="line">220</div><div class="line">221</div><div class="line">222</div><div class="line">223</div><div class="line">224</div><div class="line">225</div><div class="line">226</div><div class="line">227</div><div class="line">228</div><div class="line">229</div><div class="line">230</div><div class="line">231</div><div class="line">232</div><div class="line">233</div><div class="line">234</div><div class="line">235</div><div class="line">236</div><div class="line">237</div><div class="line">238</div><div class="line">239</div><div class="line">240</div><div class="line">241</div><div class="line">242</div><div class="line">243</div><div class="line">244</div><div class="line">245</div><div class="line">246</div><div class="line">247</div><div class="line">248</div><div class="line">249</div><div class="line">250</div><div class="line">251</div><div class="line">252</div><div class="line">253</div><div class="line">254</div><div class="line">255</div><div class="line">256</div><div class="line">257</div><div class="line">258</div><div class="line">259</div><div class="line">260</div><div class="line">261</div><div class="line">262</div><div class="line">263</div><div class="line">264</div><div class="line">265</div><div class="line">266</div><div class="line">267</div><div class="line">268</div><div class="line">269</div><div class="line">270</div><div class="line">271</div><div class="line">272</div><div class="line">273</div><div class="line">274</div><div class="line">275</div><div class="line">276</div></pre></td><td class="code"><pre><div class="line">//缓存类型的枚举</div><div class="line">typedef NS_ENUM(NSInteger, SDImageCacheType) &#123;</div><div class="line">//禁用缓存，直接从网络下载</div><div class="line">SDImageCacheTypeNone,</div><div class="line">//从磁盘获取缓存</div><div class="line">SDImageCacheTypeDisk,</div><div class="line">//从内存获取缓存</div><div class="line">SDImageCacheTypeMemory</div><div class="line">&#125;;</div><div class="line"></div><div class="line">typedef void(^SDWebImageQueryCompletedBlock)(UIImage *image, SDImageCacheType cacheType);</div><div class="line"></div><div class="line">typedef void(^SDWebImageCheckCacheCompletionBlock)(BOOL isInCache);</div><div class="line"></div><div class="line">typedef void(^SDWebImageCalculateSizeBlock)(NSUInteger fileCount, NSUInteger totalSize);</div><div class="line"></div><div class="line">/**</div><div class="line">* SDImageCache maintains a memory cache and an optional disk cache. Disk cache write operations are performed</div><div class="line">* asynchronous so it doesn’t add unnecessary latency to the UI.</div><div class="line">*/</div><div class="line">@interface SDImageCache : NSObject</div><div class="line"></div><div class="line">/**</div><div class="line">* Decompressing images that are downloaded and cached can improve performance but can consume lot of memory.</div><div class="line">* Defaults to YES. Set this to NO if you are experiencing a crash due to excessive memory consumption.</div><div class="line">*/</div><div class="line">//是否提前解压图片，打开可以提高性能，但会消耗较多的内存，如果遇到内存警告，建议关闭该选项以及内存缓存选项</div><div class="line">@property (assign, nonatomic) BOOL shouldDecompressImages;</div><div class="line"></div><div class="line">/**</div><div class="line">*  disable iCloud backup [defaults to YES]</div><div class="line">*/</div><div class="line">//是否启用iCloud</div><div class="line">@property (assign, nonatomic) BOOL shouldDisableiCloud;</div><div class="line"></div><div class="line">/**</div><div class="line">* use memory cache [defaults to YES]</div><div class="line">*/</div><div class="line">// 是否启用内存缓存</div><div class="line">@property (assign, nonatomic) BOOL shouldCacheImagesInMemory;</div><div class="line"></div><div class="line">/**</div><div class="line">* The maximum &quot;total cost&quot; of the in-memory image cache. The cost function is the number of pixels held in memory.</div><div class="line">*/</div><div class="line">// 内存允许的最大内存容量，该数值是可以存储的最大像素数</div><div class="line">@property (assign, nonatomic) NSUInteger maxMemoryCost;</div><div class="line"></div><div class="line">/**</div><div class="line">* The maximum number of objects the cache should hold.</div><div class="line">*/</div><div class="line">// 内存中允许的最大缓存数量</div><div class="line">@property (assign, nonatomic) NSUInteger maxMemoryCountLimit;</div><div class="line"></div><div class="line">/**</div><div class="line">* The maximum length of time to keep an image in the cache, in seconds</div><div class="line">*/</div><div class="line">// 磁盘缓存保留的最长时间，以秒计</div><div class="line">@property (assign, nonatomic) NSInteger maxCacheAge;</div><div class="line"></div><div class="line">/**</div><div class="line">* The maximum size of the cache, in bytes.</div><div class="line">*/</div><div class="line">// 磁盘缓存的最大容量，以字节计</div><div class="line">@property (assign, nonatomic) NSUInteger maxCacheSize;</div><div class="line"></div><div class="line">/**</div><div class="line">* Returns global shared cache instance</div><div class="line">*</div><div class="line">* @return SDImageCache global instance</div><div class="line">*/</div><div class="line">+ (SDImageCache *)sharedImageCache;</div><div class="line"></div><div class="line">/**</div><div class="line">* Init a new cache store with a specific namespace</div><div class="line">*</div><div class="line">* @param ns The namespace to use for this cache store</div><div class="line">*/</div><div class="line">//以ns 进行一些初始化操作</div><div class="line">- (id)initWithNamespace:(NSString *)ns;</div><div class="line"></div><div class="line">/**</div><div class="line">* Init a new cache store with a specific namespace and directory</div><div class="line">*</div><div class="line">* @param ns        The namespace to use for this cache store</div><div class="line">* @param directory Directory to cache disk images in</div><div class="line">*/</div><div class="line">// 进行一些初始化操作</div><div class="line">- (id)initWithNamespace:(NSString *)ns diskCacheDirectory:(NSString *)directory;</div><div class="line"></div><div class="line">//获取磁盘缓存路径</div><div class="line">-(NSString *)makeDiskCachePath:(NSString*)fullNamespace;</div><div class="line"></div><div class="line">/**</div><div class="line">* Add a read-only cache path to search for images pre-cached by SDImageCache</div><div class="line">* Useful if you want to bundle pre-loaded images with your app</div><div class="line">*</div><div class="line">* @param path The path to use for this read-only cache path</div><div class="line">*/</div><div class="line">//添加只读路径，不常用</div><div class="line">- (void)addReadOnlyCachePath:(NSString *)path;</div><div class="line"></div><div class="line">/**</div><div class="line">* Store an image into memory and disk cache at the given key.</div><div class="line">*</div><div class="line">* @param image The image to store</div><div class="line">* @param key   The unique image cache key, usually it&apos;s image absolute URL</div><div class="line">*/</div><div class="line">// 以图片的请求路径作为唯一key保存图片到内存和磁盘缓存中</div><div class="line">- (void)storeImage:(UIImage *)image forKey:(NSString *)key;</div><div class="line"></div><div class="line">/**</div><div class="line">* Store an image into memory and optionally disk cache at the given key.</div><div class="line">*</div><div class="line">* @param image  The image to store</div><div class="line">* @param key    The unique image cache key, usually it&apos;s image absolute URL</div><div class="line">* @param toDisk Store the image to disk cache if YES</div><div class="line">*/</div><div class="line">//以图片的请求路径作为唯一key保存图片到内存和磁盘（可选）缓存中</div><div class="line">- (void)storeImage:(UIImage *)image forKey:(NSString *)key toDisk:(BOOL)toDisk;</div><div class="line"></div><div class="line">/**</div><div class="line">* Store an image into memory and optionally disk cache at the given key.</div><div class="line">*</div><div class="line">* @param image       The image to store</div><div class="line">* @param recalculate BOOL indicates if imageData can be used or a new data should be constructed from the UIImage</div><div class="line">* @param imageData   The image data as returned by the server, this representation will be used for disk storage</div><div class="line">*                    instead of converting the given image object into a storable/compressed image format in order</div><div class="line">*                    to save quality and CPU</div><div class="line">* @param key         The unique image cache key, usually it&apos;s image absolute URL</div><div class="line">* @param toDisk      Store the image to disk cache if YES</div><div class="line">*/</div><div class="line">// 直接将图片的NSData（不转为图片对象）存储到内存或者磁盘中，节约空间和CPU占用</div><div class="line">- (void)storeImage:(UIImage *)image recalculateFromImage:(BOOL)recalculate imageData:(NSData *)imageData forKey:(NSString *)key toDisk:(BOOL)toDisk;</div><div class="line"></div><div class="line">/**</div><div class="line">* Store image NSData into disk cache at the given key.</div><div class="line">*</div><div class="line">* @param imageData The image data to store</div><div class="line">* @param key   The unique image cache key, usually it&apos;s image absolute URL</div><div class="line">*/</div><div class="line">// 存储图片的二进制数据到磁盘缓存中</div><div class="line">- (void)storeImageDataToDisk:(NSData *)imageData forKey:(NSString *)key;</div><div class="line"></div><div class="line">/**</div><div class="line">* Query the disk cache asynchronously.</div><div class="line">*</div><div class="line">* @param key The unique key used to store the wanted image</div><div class="line">*/</div><div class="line">//以key值异步查询磁盘中是否有该图片</div><div class="line">- (NSOperation *)queryDiskCacheForKey:(NSString *)key done:(SDWebImageQueryCompletedBlock)doneBlock;</div><div class="line"></div><div class="line">/**</div><div class="line">* Query the memory cache synchronously.</div><div class="line">*</div><div class="line">* @param key The unique key used to store the wanted image</div><div class="line">*/</div><div class="line">//以key值同步查询内存中是否有该图片</div><div class="line">- (UIImage *)imageFromMemoryCacheForKey:(NSString *)key;</div><div class="line"></div><div class="line">/**</div><div class="line">* Query the disk cache synchronously after checking the memory cache.</div><div class="line">*</div><div class="line">* @param key The unique key used to store the wanted image</div><div class="line">*/</div><div class="line">// 同步查询磁盘中是否有某张图片</div><div class="line">- (UIImage *)imageFromDiskCacheForKey:(NSString *)key;</div><div class="line"></div><div class="line">/**</div><div class="line">* Remove the image from memory and disk cache synchronously</div><div class="line">*</div><div class="line">* @param key The unique image cache key</div><div class="line">*/</div><div class="line">// 同步移除内存和磁盘中某张图片的缓存</div><div class="line">- (void)removeImageForKey:(NSString *)key;</div><div class="line"></div><div class="line"></div><div class="line">/**</div><div class="line">* Remove the image from memory and disk cache asynchronously</div><div class="line">*</div><div class="line">* @param key             The unique image cache key</div><div class="line">* @param completion      An block that should be executed after the image has been removed (optional)</div><div class="line">*/</div><div class="line">// 异步移除内存和磁盘中的某张图片的缓存,并执行完成回调</div><div class="line">- (void)removeImageForKey:(NSString *)key withCompletion:(SDWebImageNoParamsBlock)completion;</div><div class="line"></div><div class="line">/**</div><div class="line">* Remove the image from memory and optionally disk cache asynchronously</div><div class="line">*</div><div class="line">* @param key      The unique image cache key</div><div class="line">* @param fromDisk Also remove cache entry from disk if YES</div><div class="line">*/</div><div class="line">// 异步移除内存和磁盘（可选）中的某张图片的缓存</div><div class="line">- (void)removeImageForKey:(NSString *)key fromDisk:(BOOL)fromDisk;</div><div class="line"></div><div class="line">/**</div><div class="line">* Remove the image from memory and optionally disk cache asynchronously</div><div class="line">*</div><div class="line">* @param key             The unique image cache key</div><div class="line">* @param fromDisk        Also remove cache entry from disk if YES</div><div class="line">* @param completion      An block that should be executed after the image has been removed (optional)</div><div class="line">*/</div><div class="line">//  异步移除内存和磁盘（可选）中的某张图片的缓存,并执行完成回调</div><div class="line">- (void)removeImageForKey:(NSString *)key fromDisk:(BOOL)fromDisk withCompletion:(SDWebImageNoParamsBlock)completion;</div><div class="line"></div><div class="line">/**</div><div class="line">* Clear all memory cached images</div><div class="line">*/</div><div class="line">// 清除所有内存缓存</div><div class="line">- (void)clearMemory;</div><div class="line"></div><div class="line">/**</div><div class="line">* Clear all disk cached images. Non-blocking method - returns immediately.</div><div class="line">* @param completion    An block that should be executed after cache expiration completes (optional)</div><div class="line">*/</div><div class="line">// 清除磁盘缓存</div><div class="line">- (void)clearDiskOnCompletion:(SDWebImageNoParamsBlock)completion;</div><div class="line">- (void)clearDisk;</div><div class="line"></div><div class="line"></div><div class="line">/**</div><div class="line">* Remove all expired cached image from disk. Non-blocking method - returns immediately.</div><div class="line">* @param completionBlock An block that should be executed after cache expiration completes (optional)</div><div class="line">*/</div><div class="line">// 移除磁盘中过期的缓存</div><div class="line">- (void)cleanDiskWithCompletionBlock:(SDWebImageNoParamsBlock)completionBlock;</div><div class="line">- (void)cleanDisk;</div><div class="line"></div><div class="line">/**</div><div class="line">* Get the size used by the disk cache</div><div class="line">*/</div><div class="line">// 获取磁盘缓存占用容量</div><div class="line">- (NSUInteger)getSize;</div><div class="line"></div><div class="line">/**</div><div class="line">* Get the number of images in the disk cache</div><div class="line">*/</div><div class="line">// 获取磁盘缓存图片数量</div><div class="line">- (NSUInteger)getDiskCount;</div><div class="line"></div><div class="line">/**</div><div class="line">* Asynchronously calculate the disk cache&apos;s size.</div><div class="line">*/</div><div class="line">// 异步计算磁盘缓存大小</div><div class="line">- (void)calculateSizeWithCompletionBlock:(SDWebImageCalculateSizeBlock)completionBlock;</div><div class="line"></div><div class="line">/**</div><div class="line">*  Async check if image exists in disk cache already (does not load the image)</div><div class="line">*</div><div class="line">*  @param key             the key describing the url</div><div class="line">*  @param completionBlock the block to be executed when the check is done.</div><div class="line">*  @note the completion block will be always executed on the main queue</div><div class="line">*/</div><div class="line">// 异步查询磁盘中是否有某一张图片的缓存，并执行回调</div><div class="line">- (void)diskImageExistsWithKey:(NSString *)key completion:(SDWebImageCheckCacheCompletionBlock)completionBlock;</div><div class="line">- (BOOL)diskImageExistsWithKey:(NSString *)key;</div><div class="line"></div><div class="line">/**</div><div class="line">*  Get the cache path for a certain key (needs the cache path root folder)</div><div class="line">*</div><div class="line">*  @param key  the key (can be obtained from url using cacheKeyForURL)</div><div class="line">*  @param path the cache path root folder</div><div class="line">*</div><div class="line">*  @return the cache path</div><div class="line">*/</div><div class="line">// 以key值获取指定路径下的图片的磁盘缓存路径</div><div class="line">- (NSString *)cachePathForKey:(NSString *)key inPath:(NSString *)path;</div><div class="line"></div><div class="line">/**</div><div class="line">*  Get the default cache path for a certain key</div><div class="line">*</div><div class="line">*  @param key the key (can be obtained from url using cacheKeyForURL)</div><div class="line">*</div><div class="line">*  @return the default cache path</div><div class="line">*/</div><div class="line">// 以key值获取默认路径下的图片缓存路径</div><div class="line">- (NSString *)defaultCachePathForKey:(NSString *)key;</div></pre></td></tr></table></figure></p>
+<p>虽然方法看上去挺多的但其实核心的方法就是对图片缓存的增、删、查的实现，只不过每种功能可能有多种实现方式，但本质上是一样的，我们只需关注核心的几个方法即可。</p>
+<p><code>SDWebImage</code>实现了内存缓存和磁盘缓存，内存缓存是通过<code>NSCache</code>实现，磁盘缓存是通过<code>NSFileManager</code>来实现文件的存储，磁盘缓存是异步实现的。</p>
+<h4 id="初始化"><a href="#初始化" class="headerlink" title="初始化"></a>初始化</h4><p>首先定义了一个继承于<code>NSCache</code>的类<code>AutoPurgeCache</code>，当收到内存警告时，默认清除所有缓存<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line">@interface AutoPurgeCache : NSCache</div><div class="line">@end</div><div class="line"></div><div class="line">@implementation AutoPurgeCache</div><div class="line"></div><div class="line">- (id)init</div><div class="line">&#123;</div><div class="line">    self = [super init];</div><div class="line">    if (self) &#123;</div><div class="line">    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(removeAllObjects) name:UIApplicationDidReceiveMemoryWarningNotification object:nil];</div><div class="line">&#125;</div><div class="line">return self;</div><div class="line">&#125;</div><div class="line"></div><div class="line">- (void)dealloc</div><div class="line">    &#123;</div><div class="line">    [[NSNotificationCenter defaultCenter] removeObserver:self name:UIApplicationDidReceiveMemoryWarningNotification object:nil];</div><div class="line"></div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>初始化<code>SDImageCache</code><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div></pre></td><td class="code"><pre><div class="line">+ (SDImageCache *)sharedImageCache &#123;</div><div class="line">//创建单例类，copy会调用init方法</div><div class="line">    static dispatch_once_t once;</div><div class="line">    static id instance;</div><div class="line">    dispatch_once(&amp;once, ^&#123;</div><div class="line">        instance = [self new];</div><div class="line">    &#125;);</div><div class="line">    return instance;</div><div class="line">&#125;</div><div class="line"></div><div class="line">- (id)init &#123;</div><div class="line">    return [self initWithNamespace:@&quot;default&quot;];</div><div class="line">&#125;</div><div class="line"></div><div class="line">- (id)initWithNamespace:(NSString *)ns &#123;</div><div class="line">    //获取磁盘缓存的默认路径</div><div class="line">    NSString *path = [self makeDiskCachePath:ns];</div><div class="line">    return [self initWithNamespace:ns diskCacheDirectory:path];</div><div class="line">&#125;</div><div class="line"></div><div class="line">- (id)initWithNamespace:(NSString *)ns diskCacheDirectory:(NSString *)directory &#123;</div><div class="line">    if ((self = [super init])) &#123;</div><div class="line">        //缓存空间的默认名称</div><div class="line">        NSString *fullNamespace = [@&quot;com.hackemist.SDWebImageCache.&quot; stringByAppendingString:ns];</div><div class="line"></div><div class="line">        // initialise PNG signature data</div><div class="line">        //用于验证png格式</div><div class="line">        kPNGSignatureData = [NSData dataWithBytes:kPNGSignatureBytes length:8];</div><div class="line"></div><div class="line">        // Create IO serial queue</div><div class="line">        //初始化串行队列，用于异步写入磁盘</div><div class="line">        _ioQueue = dispatch_queue_create(&quot;com.hackemist.SDWebImageCache&quot;, DISPATCH_QUEUE_SERIAL);</div><div class="line"></div><div class="line">        // Init default values</div><div class="line">        //磁盘缓存存储时间，默认为一周</div><div class="line">        _maxCacheAge = kDefaultCacheMaxCacheAge;</div><div class="line"></div><div class="line">        // Init the memory cache</div><div class="line">        //初始化内存缓存</div><div class="line">        _memCache = [[AutoPurgeCache alloc] init];</div><div class="line">        _memCache.name = fullNamespace;</div><div class="line"></div><div class="line">        // Init the disk cache</div><div class="line">        //磁盘缓存的默认路径</div><div class="line">        if (directory != nil) &#123;</div><div class="line">            _diskCachePath = [directory stringByAppendingPathComponent:fullNamespace];</div><div class="line">        &#125; else &#123;</div><div class="line">            NSString *path = [self makeDiskCachePath:ns];</div><div class="line">            _diskCachePath = path;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        //下面是一些属性的初始化值</div><div class="line">        _shouldDecompressImages = YES;</div><div class="line">        _shouldCacheImagesInMemory = YES;</div><div class="line">        _shouldDisableiCloud = YES;</div><div class="line"></div><div class="line">        dispatch_sync(_ioQueue, ^&#123;</div><div class="line">          //初始化文件管理器</div><div class="line">            _fileManager = [NSFileManager new];</div><div class="line">        &#125;);</div><div class="line"></div><div class="line">//下面是一些清除缓存的通知</div><div class="line">#if TARGET_OS_IOS</div><div class="line">        // Subscribe to app events</div><div class="line">      //收到内存警告时清除内存缓存</div><div class="line">        [[NSNotificationCenter defaultCenter] addObserver:self</div><div class="line">                                                 selector:@selector(clearMemory)</div><div class="line">                                                     name:UIApplicationDidReceiveMemoryWarningNotification</div><div class="line">                                                   object:nil];</div><div class="line">        //每次进程杀死前都清理过期(默认大于一周)的磁盘缓存</div><div class="line">        [[NSNotificationCenter defaultCenter] addObserver:self</div><div class="line">                                                 selector:@selector(cleanDisk)</div><div class="line">                                                     name:UIApplicationWillTerminateNotification</div><div class="line">                                                   object:nil];</div><div class="line">      //后台挂起时清理过期磁盘缓存</div><div class="line">        [[NSNotificationCenter defaultCenter] addObserver:self</div><div class="line">                                                 selector:@selector(backgroundCleanDisk)</div><div class="line">                                                     name:UIApplicationDidEnterBackgroundNotification</div><div class="line">                                                   object:nil];</div><div class="line">#endif</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    return self;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>以上就是<code>SDImageCache</code>的初始化过程，主要是初始化内存缓存对象以及初始化磁盘缓存目录，以及对一些默认参数的赋值。</p>
+<h4 id="缓存图片"><a href="#缓存图片" class="headerlink" title="缓存图片"></a>缓存图片</h4><p>虽然<code>SDImageCache</code>有多个存储图片的方法，但都是基于下面这一个方法并传入不同的参数而已：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div></pre></td><td class="code"><pre><div class="line">- (void)storeImage:(UIImage *)image recalculateFromImage:(BOOL)recalculate imageData:(NSData *)imageData forKey:(NSString *)key toDisk:(BOOL)toDisk &#123;</div><div class="line">    if (!image || !key) &#123;</div><div class="line">        return;</div><div class="line">    &#125;</div><div class="line">    // if memory cache is enabled</div><div class="line">    //是否允许内存缓存</div><div class="line">    if (self.shouldCacheImagesInMemory) &#123;</div><div class="line">        //计算图片所占空间</div><div class="line">        //NSUInteger SDCacheCostForImage(UIImage *image) &#123;</div><div class="line">         // return image.size.height * image.size.width * image.scale * image.scale;&#125;</div><div class="line">        NSUInteger cost = SDCacheCostForImage(image);</div><div class="line">        //写入内存缓存</div><div class="line">        [self.memCache setObject:image forKey:key cost:cost];</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    if (toDisk) &#123;</div><div class="line">        dispatch_async(self.ioQueue, ^&#123;</div><div class="line">            NSData *data = imageData;</div><div class="line"></div><div class="line">            if (image &amp;&amp; (recalculate || !data)) &#123;</div><div class="line">            //如果需要重新计算(recalculate)或者data为0,需要将image转化为二进制数据</div><div class="line">#if TARGET_OS_IPHONE</div><div class="line">                // We need to determine if the image is a PNG or a JPEG</div><div class="line">                // PNGs are easier to detect because they have a unique signature (http://www.w3.org/TR/PNG-Structure.html)</div><div class="line">                // The first eight bytes of a PNG file always contain the following (decimal) values:</div><div class="line">                // 137 80 78 71 13 10 26 10</div><div class="line"></div><div class="line">                // If the imageData is nil (i.e. if trying to save a UIImage directly or the image was transformed on download)</div><div class="line">                // and the image has an alpha channel, we will consider it PNG to avoid losing the transparency</div><div class="line"></div><div class="line">              //这里这段代码做的一个工作是判断图片格式</div><div class="line">             //有两种方式：一种方式是判断二进制数据前8位是否是png特定格式(137 80 78 71 13 10 26 10)；一种是判断图片是否有透明度</div><div class="line">                int alphaInfo = CGImageGetAlphaInfo(image.CGImage);</div><div class="line">                BOOL hasAlpha = !(alphaInfo == kCGImageAlphaNone ||</div><div class="line">                                  alphaInfo == kCGImageAlphaNoneSkipFirst ||</div><div class="line">                                  alphaInfo == kCGImageAlphaNoneSkipLast);</div><div class="line">                //如果有透明度 则证明是png格式</div><div class="line">                BOOL imageIsPng = hasAlpha;</div><div class="line"></div><div class="line">                // But if we have an image data, we will look at the preffix</div><div class="line">                //如果有data数据，直接判断起始数据是否符合格式</div><div class="line">                if ([imageData length] &gt;= [kPNGSignatureData length]) &#123;</div><div class="line">                    imageIsPng = ImageDataHasPNGPreffix(imageData);</div><div class="line">                &#125;</div><div class="line"></div><div class="line">              //如果是png格式，转为data数据, 否则转为png</div><div class="line">                if (imageIsPng) &#123;</div><div class="line"></div><div class="line">                    data = UIImagePNGRepresentation(image);</div><div class="line">                &#125;</div><div class="line">                else &#123;</div><div class="line">                    data = UIImageJPEGRepresentation(image, (CGFloat)1.0);</div><div class="line">                &#125;</div><div class="line">#else  </div><div class="line">              //非iOS平台的处理，看不懂，总之就是获取图片的data数据</div><div class="line">                data = [NSBitmapImageRep representationOfImageRepsInArray:image.representations usingType: NSJPEGFileType properties:nil];</div><div class="line">#endif</div><div class="line">            &#125;</div><div class="line">            //把二进制数据存入磁盘</div><div class="line">            [self storeImageDataToDisk:data forKey:key];</div><div class="line">        &#125;);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>以上这段代码比较简单，主要是对传入参数的合法性做一些判断以及对image的格式做判断并获取NSData数据，继续看storeImageDataToDisk:方法：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div></pre></td><td class="code"><pre><div class="line">- (void)storeImageDataToDisk:(NSData *)imageData forKey:(NSString *)key &#123;</div><div class="line"></div><div class="line">    if (!imageData) &#123;</div><div class="line">        return;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    if (![_fileManager fileExistsAtPath:_diskCachePath]) &#123;</div><div class="line">      //如果默认磁盘缓存路径不存在，则创建缓存文件夹</div><div class="line">        [_fileManager createDirectoryAtPath:_diskCachePath withIntermediateDirectories:YES attributes:nil error:NULL];</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    // get cache Path for image key</div><div class="line">    //得到单独文件的路径，这里对URL做了一个MD5加密+扩展名作为文件名，具体代码不贴了，源码里都可以看到</div><div class="line">    NSString *cachePathForKey = [self defaultCachePathForKey:key];</div><div class="line">    // transform to NSUrl</div><div class="line">    // 生成路径URL用以iCloud备份</div><div class="line">    NSURL *fileURL = [NSURL fileURLWithPath:cachePathForKey];</div><div class="line">    //写入缓存文件</div><div class="line">    [_fileManager createFileAtPath:cachePathForKey contents:imageData attributes:nil];</div><div class="line"></div><div class="line">    // disable iCloud backup</div><div class="line">    if (self.shouldDisableiCloud) &#123;</div><div class="line">        //iCloud备份，没有深入了解</div><div class="line">        [fileURL setResourceValue:[NSNumber numberWithBool:YES] forKey:NSURLIsExcludedFromBackupKey error:nil];</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>至此，图片缓存的过程就完成了，这时候在沙盒Library/Cache/目录下就会有一份图片的缓存。<br>下面看一下查询图片的接口，查询内存缓存的接口比较简单，只需要一句话<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">- (UIImage *)imageFromMemoryCacheForKey:(NSString *)key &#123;</div><div class="line">	return [self.memCache objectForKey:key];</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>看一下查询磁盘缓存的接口<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div></pre></td><td class="code"><pre><div class="line">- (NSOperation *)queryDiskCacheForKey:(NSString *)key done:(SDWebImageQueryCompletedBlock)doneBlock &#123;</div><div class="line"></div><div class="line">// block回调传入image对象还有缓存对象</div><div class="line">// typedef void(^SDWebImageQueryCompletedBlock)(UIImage *image, SDImageCacheType cacheType);</div><div class="line">    if (!doneBlock) &#123;</div><div class="line">        return nil;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    if (!key) &#123;</div><div class="line">        doneBlock(nil, SDImageCacheTypeNone);</div><div class="line">        return nil;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    // First check the in-memory cache...</div><div class="line">    //如果内存缓存中查询到了，执行成功block</div><div class="line">    UIImage *image = [self imageFromMemoryCacheForKey:key];</div><div class="line">    if (image) &#123;</div><div class="line">        doneBlock(image, SDImageCacheTypeMemory);</div><div class="line">        return nil;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    //内存中没有，异步查询磁盘 </div><div class="line">    NSOperation *operation = [NSOperation new];</div><div class="line">    dispatch_async(self.ioQueue, ^&#123;</div><div class="line">        if (operation.isCancelled) &#123;</div><div class="line">            return;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        @autoreleasepool &#123;</div><div class="line">            //对图片做了一系列的解码转换等操作，得到UIImage对象</div><div class="line">            UIImage *diskImage = [self diskImageForKey:key];</div><div class="line">            if (diskImage &amp;&amp; self.shouldCacheImagesInMemory) &#123;</div><div class="line">            //如果允许内存缓存，写入内存以提高下次查询效率</div><div class="line">                NSUInteger cost = SDCacheCostForImage(diskImage);</div><div class="line">                [self.memCache setObject:diskImage forKey:key cost:cost];</div><div class="line">            &#125;</div><div class="line"></div><div class="line">            dispatch_async(dispatch_get_main_queue(), ^&#123;</div><div class="line">                //回到主线程，执行成功回调</div><div class="line">                doneBlock(diskImage, SDImageCacheTypeDisk);</div><div class="line">            &#125;);</div><div class="line">        &#125;</div><div class="line">    &#125;);</div><div class="line"></div><div class="line">    return operation;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>磁盘查询也是非常简单的，至于这个接口为什么返回一个<code>NSOperation</code>对象，我们在单独讲<code>SDWebImageManager</code>时再说。<br>再来看一下清理缓存的接口，分两种情况， 一种是<code>clear</code>一种是<code>clean</code>。<code>clear</code>比较暴力，直接移除内存缓存的对象或者直接移除磁盘缓存文件夹。着重看一下<code>cleanDisk</code>：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div></pre></td><td class="code"><pre><div class="line">- (void)cleanDiskWithCompletionBlock:(SDWebImageNoParamsBlock)completionBlock &#123;</div><div class="line">    //异步执行</div><div class="line">    dispatch_async(self.ioQueue, ^&#123;</div><div class="line">        NSURL *diskCacheURL = [NSURL fileURLWithPath:self.diskCachePath isDirectory:YES];</div><div class="line">        //需要获取的文件属性：是否是文件夹、修改时间、文件大小</div><div class="line">        NSArray *resourceKeys = @[NSURLIsDirectoryKey, NSURLContentModificationDateKey, NSURLTotalFileAllocatedSizeKey];</div><div class="line"></div><div class="line">        // This enumerator prefetches useful properties for our cache files.</div><div class="line">       // 枚举器，遍历磁盘缓存目录</div><div class="line">        NSDirectoryEnumerator *fileEnumerator = [_fileManager enumeratorAtURL:diskCacheURL</div><div class="line">                                                   includingPropertiesForKeys:resourceKeys</div><div class="line">                                                                      options:NSDirectoryEnumerationSkipsHiddenFiles</div><div class="line">                                                                 errorHandler:NULL];</div><div class="line">        //过期日期：从现在往前推 maxCacheAge，超过这个日期的删除</div><div class="line">        NSDate *expirationDate = [NSDate dateWithTimeIntervalSinceNow:-self.maxCacheAge];</div><div class="line">        NSMutableDictionary *cacheFiles = [NSMutableDictionary dictionary];</div><div class="line">        NSUInteger currentCacheSize = 0;</div><div class="line"></div><div class="line">        // Enumerate all of the files in the cache directory.  This loop has two purposes:</div><div class="line">        //</div><div class="line">        //  1. Removing files that are older than the expiration date.</div><div class="line">        //  2. Storing file attributes for the size-based cleanup pass.</div><div class="line">        NSMutableArray *urlsToDelete = [[NSMutableArray alloc] init];</div><div class="line">        for (NSURL *fileURL in fileEnumerator) &#123;</div><div class="line">            NSDictionary *resourceValues = [fileURL resourceValuesForKeys:resourceKeys error:NULL];</div><div class="line"></div><div class="line">            // Skip directories.</div><div class="line">            //如果是文件夹，跳过</div><div class="line">            if ([resourceValues[NSURLIsDirectoryKey] boolValue]) &#123;</div><div class="line">                continue;</div><div class="line">            &#125;</div><div class="line"></div><div class="line">            // Remove files that are older than the expiration date;</div><div class="line">            //如果修改时间早于一周前，移除</div><div class="line">            NSDate *modificationDate = resourceValues[NSURLContentModificationDateKey];</div><div class="line">            if ([[modificationDate laterDate:expirationDate] isEqualToDate:expirationDate]) &#123;</div><div class="line">                [urlsToDelete addObject:fileURL];</div><div class="line">                continue;</div><div class="line">            &#125;</div><div class="line"></div><div class="line">            // Store a reference to this file and account for its total size.</div><div class="line">            //统计缓存总大小并暂存文件属性</div><div class="line">            NSNumber *totalAllocatedSize = resourceValues[NSURLTotalFileAllocatedSizeKey];</div><div class="line">            currentCacheSize += [totalAllocatedSize unsignedIntegerValue];</div><div class="line">            [cacheFiles setObject:resourceValues forKey:fileURL];</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        for (NSURL *fileURL in urlsToDelete) &#123;</div><div class="line">            //移除缓存文件</div><div class="line">            [_fileManager removeItemAtURL:fileURL error:nil];</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        // If our remaining disk cache exceeds a configured maximum size, perform a second</div><div class="line">        // size-based cleanup pass.  We delete the oldest files first.</div><div class="line">        //如果剩下的文件总大小大于我们定义的总的内存大小，再循环一遍，删除相对较老的文件</div><div class="line">        if (self.maxCacheSize &gt; 0 &amp;&amp; currentCacheSize &gt; self.maxCacheSize) &#123;</div><div class="line">            // Target half of our maximum cache size for this cleanup pass.</div><div class="line">            //设定一个期望大小——删到最大内存的一半</div><div class="line">            const NSUInteger desiredCacheSize = self.maxCacheSize / 2;</div><div class="line"></div><div class="line">            // Sort the remaining cache files by their last modification time (oldest first).</div><div class="line">            //按照文件修改时间由老到新排序</div><div class="line">            NSArray *sortedFiles = [cacheFiles keysSortedByValueWithOptions:NSSortConcurrent</div><div class="line">                                                            usingComparator:^NSComparisonResult(id obj1, id obj2) &#123;</div><div class="line">                                                                return [obj1[NSURLContentModificationDateKey] compare:obj2[NSURLContentModificationDateKey]];</div><div class="line">                                                            &#125;];</div><div class="line"></div><div class="line">            // Delete files until we fall below our desired cache size.</div><div class="line">            //对排序后的数组循环删除，知道缓存占用内存降到我们期望的数值，跳出循环</div><div class="line">            for (NSURL *fileURL in sortedFiles) &#123;</div><div class="line">                if ([_fileManager removeItemAtURL:fileURL error:nil]) &#123;</div><div class="line">                    NSDictionary *resourceValues = cacheFiles[fileURL];</div><div class="line">                    NSNumber *totalAllocatedSize = resourceValues[NSURLTotalFileAllocatedSizeKey];</div><div class="line">                    currentCacheSize -= [totalAllocatedSize unsignedIntegerValue];</div><div class="line"></div><div class="line">                    if (currentCacheSize &lt; desiredCacheSize) &#123;</div><div class="line">                        break;</div><div class="line">                    &#125;</div><div class="line">                &#125;</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">        if (completionBlock) &#123;</div><div class="line">          //在主线程执行完成回调</div><div class="line">            dispatch_async(dispatch_get_main_queue(), ^&#123;</div><div class="line">                completionBlock();</div><div class="line">            &#125;);</div><div class="line">        &#125;</div><div class="line">    &#125;);</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>以上就是SDImageCache的所有内容。</p>
+
+      
+    </div>
+    
+  </div>
+  
+    
+    <div class="copyright">
+        <p><span>本文标题:</span><a href="/2016/12/09/SDWebImage源码（二）——SDImageCache缓存器/">SDWebImage源码（二）——SDImageCache缓存器</a></p>
+        <p><span>文章作者:</span><a href="/" title="回到主页">Karl</a></p>
+        <p><span>发布时间:</span>2016-12-09, 16:16:58</p>
+        <p><span>最后更新:</span>2017-05-17, 09:03:32</p>
+        <p>
+            <span>原始链接:</span><a class="post-url" href="/2016/12/09/SDWebImage源码（二）——SDImageCache缓存器/" title="SDWebImage源码（二）——SDImageCache缓存器">http://www.whisperkarl.com/2016/12/09/SDWebImage源码（二）——SDImageCache缓存器/</a>
+            <span class="copy-path" data-clipboard-text="原文: http://www.whisperkarl.com/2016/12/09/SDWebImage源码（二）——SDImageCache缓存器/　　作者: Karl" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+            <script> var clipboard = new Clipboard('.copy-path'); </script>
+        </p>
+        <p>
+            <span>许可协议:</span><i class="fa fa-creative-commons"></i> <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" title="CC BY-NC-SA 4.0 International" target = "_blank">"署名-非商用-相同方式共享 4.0"</a> 转载请保留原文链接及作者。
+        </p>
+    </div>
+
+
+
+    <nav id="article-nav">
+        
+            <div id="article-nav-newer" class="article-nav-title">
+                <a href="/2016/12/10/SDWebImage源码（三）——SDWebImageDownloader下载器/">
+                    SDWebImage源码（三）——SDWebImageDownloader下载器
+                </a>
+            </div>
+        
+        
+            <div id="article-nav-older" class="article-nav-title">
+                <a href="/2016/12/08/SDWebImage源码（一）——SDWebImage概览/">
+                    SDWebImage源码（一）——SDWebImage概览
+                </a>
+            </div>
+        
+    </nav>
+
+  
+</article>
+
+
+
+    
+<div class="share">
+    
+        <div class="bdsharebuttonbox">
+            <a href="#" class="fa fa-twitter bds_twi" data-cmd="twi" title="分享到推特"></a>
+            <a href="#" class="fa fa-weibo bds_tsina" data-cmd="tsina" title="分享到新浪微博"></a>
+            <a href="#" class="fa fa-qq bds_sqq" data-cmd="sqq" title="分享给 QQ 好友"></a>
+            <a href="#" class="fa fa-files-o bds_copy" data-cmd="copy" title="复制网址"></a>
+            <a href="#" class="fa fa fa-envelope-o bds_mail" data-cmd="mail" title="通过邮件分享"></a>
+            <a href="#" class="fa fa-weixin bds_weixin" data-cmd="weixin" title="生成文章二维码"></a>
+            <a href="#" class="fa fa-share-alt bds_more" data-cmd="more"></i></a>
+        </div>
+        <script>
+            window._bd_share_config={
+                "common":{"bdSnsKey":{},"bdText":"SDWebImage源码（二）——SDImageCache缓存器　| Karl的开发随笔　","bdMini":"2","bdMiniList":false,"bdPic":"","bdStyle":"0","bdSize":"24"},"share":{}};with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];
+        </script>
+    
+
+    
+</div>
+
+
+
+
+
+
+
+    
+      <div class="duoshuo" id="comments">
+    <div id="comment-box" ></div>
+    <div class="ds-thread" id="ds-thread" data-thread-key="2016/12/09/SDWebImage源码（二）——SDImageCache缓存器/" data-title="SDWebImage源码（二）——SDImageCache缓存器" data-url="http://www.whisperkarl.com/2016/12/09/SDWebImage源码（二）——SDImageCache缓存器/"></div>
+    <script>
+        var duoshuoQuery = {short_name:"whisperkarl"};
+        var loadComment = function(){
+            var d = document, s = d.createElement('script');
+            s.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+            s.async = true; s.charset = 'UTF-8';
+            (d.head || d.body).appendChild(s);
+        }
+
+        
+    </script>
+    
+    <script> loadComment(); </script>
+
+</div>
+    
+
+
+
+
+    <div class="scroll" id="post-nav-button">
+        
+            <a href="/2016/12/10/SDWebImage源码（三）——SDWebImageDownloader下载器/" title="上一篇: SDWebImage源码（三）——SDWebImageDownloader下载器">
+                <i class="fa fa-angle-left"></i>
+            </a>
+        
+
+        <a title="文章列表"><i class="fa fa-bars"></i><i class="fa fa-times"></i></a>
+
+        
+            <a href="/2016/12/08/SDWebImage源码（一）——SDWebImage概览/" title="下一篇: SDWebImage源码（一）——SDWebImage概览">
+                <i class="fa fa-angle-right"></i>
+            </a>
+        
+    </div>
+
+    <ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2018/07/11/窥探KVO本质/">窥探KVO本质</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/12/SDWebImage源码（四）——SDWebImageManager/">SDWebImage源码（四）——SDWebImageManager</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/10/SDWebImage源码（三）——SDWebImageDownloader下载器/">SDWebImage源码（三）——SDWebImageDownloader下载器</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/09/SDWebImage源码（二）——SDImageCache缓存器/">SDWebImage源码（二）——SDImageCache缓存器</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/08/SDWebImage源码（一）——SDWebImage概览/">SDWebImage源码（一）——SDWebImage概览</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/11/22/iOS-AutoLayout约束的优先级/">iOS AutoLayout约束的优先级</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/09/23/从iOS的事件响应链看TableView为什么不响应touchesBegan/">从iOS的事件响应链看TableView为什么不响应touchesBegan</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/08/22/php基础语法知识/">php基础语法知识</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/08/12/Mac下php开发环境搭建/">Mac下php开发环境搭建</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/07/20/MAC环境下使用hexo-github搭建个人博客/">MAC环境下使用hexo+github搭建个人博客</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/07/19/iOS-自定义转场动画/">iOS 自定义转场动画</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/06/29/解决自定义导航栏导致系统导航栏消失的问题/">解决自定义导航栏导致系统导航栏消失的问题</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/06/15/Swift笔记-从Swift再看ARC以及循环引用/">Swift笔记:从Swift再看ARC以及循环引用</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/05/25/Swift笔记-关于init的总结/">Swift笔记:关于init的总结</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/05/17/Google-Maps-SDK-for-iOS-谷歌地图使用总结/">Google Maps SDK for iOS 谷歌地图使用总结</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/05/17/关于git、github和-gitignore的一些事/">关于git、github和.gitignore的一些事</a></li></ul>
+
+
+
+
+    <script>
+        
+    </script>
+</div>
+      <footer id="footer">
+    <div class="outer">
+        <div id="footer-info">
+            <div class="footer-left">
+                <i class="fa fa-copyright"></i> 
+                2015-2018 Karl
+            </div>
+            <div class="footer-right">
+                <a href="http://hexo.io/" target="_blank" title="快速、简洁且高效的博客框架">Hexo</a>  Theme <a href="https://github.com/MOxFIVE/hexo-theme-yelee" target="_blank" title="简而不减 Hexo 双栏博客主题  v3.5">Yelee</a> by MOxFIVE <i class="fa fa-heart animated infinite pulse"></i>
+            </div>
+        </div>
+        
+            <div class="visit">
+                
+                    <span id="busuanzi_container_site_pv" style='display:none'>
+                        <span id="site-visit" title="本站到访数"><i class="fa fa-user" aria-hidden="true"></i><span id="busuanzi_value_site_uv"></span>
+                        </span>
+                    </span>
+                
+                
+                    <span>| </span>
+                
+                
+                    <span id="busuanzi_container_page_pv" style='display:none'>
+                        <span id="page-visit"  title="本页阅读量"><i class="fa fa-eye animated infinite pulse" aria-hidden="true"></i><span id="busuanzi_value_page_pv"></span>
+                        </span>
+                    </span>
+                
+            </div>
+        
+    </div>
+</footer>
+    </div>
+    
+<script data-main="/js/main.js" src="//cdn.bootcss.com/require.js/2.2.0/require.min.js"></script>
+
+
+
+
+
+<div class="scroll" id="scroll">
+    <a href="#" title="返回顶部"><i class="fa fa-arrow-up"></i></a>
+    <a href="#comments" onclick="load$hide();" title="查看评论"><i class="fa fa-comments-o"></i></a>
+    <a href="#footer" title="转到底部"><i class="fa fa-arrow-down"></i></a>
+</div>
+<script>
+    // Open in New Window
+    
+        var oOpenInNew = {
+            
+            
+            
+            
+            
+            
+             archives: ".archive-article-title", 
+             miniArchives: "a.post-list-link", 
+            
+            
+             socail: ".social a" 
+        }
+        for (var x in oOpenInNew) {
+            $(oOpenInNew[x]).attr("target", "_blank");
+        }
+    
+</script>
+
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+  </div>
+</body>
+</html>

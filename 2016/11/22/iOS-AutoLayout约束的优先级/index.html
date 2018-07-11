@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html >
+<head>
+
+    <!--[if lt IE 9]>
+        <style>body {display: none; background: none !important} </style>
+        <meta http-equiv="Refresh" Content="0; url=//outdatedbrowser.com/" />
+    <![endif]-->
+
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="format-detection" content="telephone=no" />
+<meta name="author" content="Karl" />
+
+
+
+<meta name="description" content="约束的优先级AutoLayout中添加的约束也有优先级,优先级的数值是1~1000。分为两种情况：">
+<meta name="keywords" content="iOS">
+<meta property="og:type" content="article">
+<meta property="og:title" content="iOS AutoLayout约束的优先级">
+<meta property="og:url" content="http://www.whisperkarl.com/2016/11/22/iOS-AutoLayout约束的优先级/index.html">
+<meta property="og:site_name" content="Karl的开发随笔">
+<meta property="og:description" content="约束的优先级AutoLayout中添加的约束也有优先级,优先级的数值是1~1000。分为两种情况：">
+<meta property="og:image" content="http://occxq9xco.bkt.clouddn.com/autolayout1.png">
+<meta property="og:image" content="http://occxq9xco.bkt.clouddn.com/autolayout2.png">
+<meta property="og:image" content="http://occxq9xco.bkt.clouddn.com/autolayout3.png">
+<meta property="og:image" content="http://occxq9xco.bkt.clouddn.com/autolayout4.png">
+<meta property="og:image" content="http://occxq9xco.bkt.clouddn.com/autolayout5.png">
+<meta property="og:image" content="http://occxq9xco.bkt.clouddn.com/autolayout6.png">
+<meta property="og:image" content="http://occxq9xco.bkt.clouddn.com/autolayout7.png">
+<meta property="og:image" content="http://occxq9xco.bkt.clouddn.com/autolayout8.png">
+<meta property="og:image" content="http://occxq9xco.bkt.clouddn.com/autolayout9.png">
+<meta property="og:updated_time" content="2017-05-17T01:03:32.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="iOS AutoLayout约束的优先级">
+<meta name="twitter:description" content="约束的优先级AutoLayout中添加的约束也有优先级,优先级的数值是1~1000。分为两种情况：">
+<meta name="twitter:image" content="http://occxq9xco.bkt.clouddn.com/autolayout1.png">
+
+<link rel="apple-touch-icon" href= "/apple-touch-icon.png">
+
+
+    <link rel="alternate" href="/atom.xml" title="Karl的开发随笔" type="application/atom+xml">
+
+
+
+    <link rel="shortcut icon" href="/favicon.png">
+
+
+
+    <link href="//cdn.bootcss.com/animate.css/3.5.1/animate.min.css" rel="stylesheet">
+
+
+
+    <link href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.min.css" rel="stylesheet">
+
+
+
+    <script src="//cdn.bootcss.com/pace/1.0.2/pace.min.js"></script>
+    <link href="//cdn.bootcss.com/pace/1.0.2/themes/blue/pace-theme-minimal.css" rel="stylesheet">
+
+
+<link rel="stylesheet" href="/css/style.css">
+
+
+
+<link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+
+
+<title>iOS AutoLayout约束的优先级 | Karl的开发随笔</title>
+
+<script src="//cdn.bootcss.com/jquery/2.2.4/jquery.min.js"></script>
+<script src="//cdn.bootcss.com/clipboard.js/1.5.10/clipboard.min.js"></script>
+
+<script>
+    var yiliaConfig = {
+        fancybox: true,
+        animate: true,
+        isHome: false,
+        isPost: true,
+        isArchive: false,
+        isTag: false,
+        isCategory: false,
+        fancybox_js: "//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.min.js",
+        scrollreveal: "//cdn.bootcss.com/scrollReveal.js/3.1.4/scrollreveal.min.js",
+        search: undefined
+    }
+</script>
+
+
+    <script>
+        yiliaConfig.jquery_ui = [true, "//cdn.bootcss.com/jqueryui/1.10.4/jquery-ui.min.js", "//cdn.bootcss.com/jqueryui/1.10.4/css/jquery-ui.min.css"];
+    </script>
+
+
+
+    <script> yiliaConfig.rootUrl = "\/";</script>
+
+
+
+
+
+
+</head>
+<body>
+  <div id="container">
+    <div class="left-col">
+    <div class="overlay"></div>
+<div class="intrude-less">
+    <header id="header" class="inner">
+        <a href="/" class="profilepic">
+            <img src="/img/avatar.png" class="animated zoomIn">
+        </a>
+        <hgroup>
+          <h1 class="header-author"><a href="/">Karl</a></h1>
+        </hgroup>
+
+        
+        <p class="header-subtitle">一个程序员的自我修行</p>
+        
+
+        
+
+
+        
+
+        <div id="switch-area" class="switch-area">
+            <div class="switch-wrap">
+                <section class="switch-part switch-part1">
+                    <nav class="header-menu">
+                        <ul>
+                        
+                            <li><a href="/">主页</a></li>
+                        
+                            <li><a href="/archives/">所有文章</a></li>
+                        
+                            <li><a href="/tags/">标签云</a></li>
+                        
+                            <li><a href="/about/">关于我</a></li>
+                        
+                        </ul>
+                    </nav>
+                    <nav class="header-nav">
+                        <ul class="social">
+                            
+                                <a class="fa 新浪微博" href="http://weibo.com/1659245264/profile?rightmod=1&wvr=6&mod=personinfo&is_all=1" title="新浪微博"></a>
+                            
+                                <a class="fa GitHub" href="https://github.com/WhisperKarl" title="GitHub"></a>
+                            
+                                <a class="fa 简书" href="http://www.jianshu.com/users/d6b23f5aa337/latest_articles" title="简书"></a>
+                            
+                        </ul>
+                    </nav>
+                </section>
+                
+                
+                
+                
+                <section class="switch-part switch-part3">
+                    <div id="js-friends">
+                    
+                      <a class="main-nav-link switch-friends-link" href="https://hexo.io">Hexo</a>
+                    
+                      <a class="main-nav-link switch-friends-link" href="https://pages.github.com/">GitHub</a>
+                    
+                      <a class="main-nav-link switch-friends-link" href="http://moxfive.xyz/">MOxFIVE</a>
+                    
+                    </div>
+                </section>
+                
+
+                
+            </div>
+        </div>
+    </header>                
+</div>
+    </div>
+    <div class="mid-col">
+      <nav id="mobile-nav">
+      <div class="overlay">
+          <div class="slider-trigger"></div>
+          <h1 class="header-author js-mobile-header hide"><a href="/" title="回到主页">Karl</a></h1>
+      </div>
+    <div class="intrude-less">
+        <header id="header" class="inner">
+            <a href="/" class="profilepic">
+                <img src="/img/avatar.png" class="animated zoomIn">
+            </a>
+            <hgroup>
+              <h1 class="header-author"><a href="/" title="回到主页">Karl</a></h1>
+            </hgroup>
+            
+            <p class="header-subtitle">一个程序员的自我修行</p>
+            
+            <nav class="header-menu">
+                <ul>
+                
+                    <li><a href="/">主页</a></li>
+                
+                    <li><a href="/archives/">所有文章</a></li>
+                
+                    <li><a href="/tags/">标签云</a></li>
+                
+                    <li><a href="/about/">关于我</a></li>
+                
+                <div class="clearfix"></div>
+                </ul>
+            </nav>
+            <nav class="header-nav">
+                        <ul class="social">
+                            
+                                <a class="fa 新浪微博" target="_blank" href="http://weibo.com/1659245264/profile?rightmod=1&wvr=6&mod=personinfo&is_all=1" title="新浪微博"></a>
+                            
+                                <a class="fa GitHub" target="_blank" href="https://github.com/WhisperKarl" title="GitHub"></a>
+                            
+                                <a class="fa 简书" target="_blank" href="http://www.jianshu.com/users/d6b23f5aa337/latest_articles" title="简书"></a>
+                            
+                        </ul>
+            </nav>
+        </header>                
+    </div>
+    <link class="menu-list" tags="标签" friends="友情链接" about="关于我"/>
+</nav>
+      <div class="body-wrap"><article id="post-iOS-AutoLayout约束的优先级" class="article article-type-post" itemscope itemprop="blogPost">
+  
+    <div class="article-meta">
+      <a href="/2016/11/22/iOS-AutoLayout约束的优先级/" class="article-date">
+      <time datetime="2016-11-22T10:56:22.000Z" itemprop="datePublished">2016-11-22</time>
+</a>
+
+
+    </div>
+  
+  <div class="article-inner">
+    
+      <input type="hidden" class="isFancy" />
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      iOS AutoLayout约束的优先级
+    </h1>
+  
+
+      </header>
+      
+      <div class="article-info article-info-post">
+        
+    <div class="article-category tagcloud">
+    <a class="article-category-link" href="/categories/programming/">编程</a>
+    </div>
+
+
+        
+    <div class="article-tag tagcloud">
+        <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/iOS/">iOS</a></li></ul>
+    </div>
+
+        <div class="clearfix"></div>
+      </div>
+      
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+          
+        <h2 id="约束的优先级"><a href="#约束的优先级" class="headerlink" title="约束的优先级"></a>约束的优先级</h2><p>AutoLayout中添加的约束也有优先级,优先级的数值是1~1000。分为两种情况：<br><a id="more"></a></p>
+<ul>
+<li>一种情况是我们经常添加的各种约束,默认的优先级是1000，也就是最高级别，条件允许的话系统会满足我们所有的约束需求。</li>
+<li>另外一种情况就是固有约束(intinsic content size)，严格来说这个这个更像是指UILabel和UIButton控件的一种属性,但是在AutoLayout中这个属性的取值和约束优先级的属性相结合才能完成图形的绘制。<br>我们知道UIButton和UILabel两种控件可以根据内容长短来控制控件宽度，当展示内容的宽度满足不了约束的要求时(过短或者过宽)，控件就会被拉伸或者压缩，当我们不想控件被拉伸或者压缩时，就需要设置控件的固有约束（intinsic content size）来实现我们的需求。固有约束分为两种：<br>1 ) Content Hugging Priority<br>官方文档的解释是<br><code>Returns the priority with which a view resists being made larger than its intrinsic size.</code><br>即表示的是控件的抗拉伸优先级，优先级越高，越不易被拉伸，默认为251<br>2) Content Compression Resistance Priority<br><code>Returns the priority with which a view resists being made smaller than its intrinsic size.</code><br>这个优先级的字面意思很明确了，是防压缩优先级，优先级越高，越不易被压缩，默认为750</li>
+</ul>
+<p>多说无益，举个栗子来感受一下</p>
+<h2 id="举个栗子"><a href="#举个栗子" class="headerlink" title="举个栗子"></a>举个栗子</h2><ul>
+<li><p>我们放置如图所示约束的一个label控件，约束的默认优先级为1000，固有约束 Content Hugging Priority为251,  Content Compression Resistance Priority为750<br><img src="http://occxq9xco.bkt.clouddn.com/autolayout1.png" alt="1.png"><br>运行结果为<br><img src="http://occxq9xco.bkt.clouddn.com/autolayout2.png" alt="2.png"><br>为什么会这样呢，不难想到是由于  左边距+右边距+Label宽度&gt;屏幕宽度，无法满足我们所有的约束需求，而根据优先级的数值，左右边距的有限级（1000）&gt; 抗压缩优先级（750），所以系统优先满足左右边距而选择压缩Label的方案</p>
+</li>
+<li><p>Content Compression Resistance Priority的影响<br>我们把左边距的优先级设置为700，这时候它小于Content Compression Resistance Priority为的优先级（750）<br><img src="http://occxq9xco.bkt.clouddn.com/autolayout3.png" alt="3.png"><br>运行结果变为<br><img src="http://occxq9xco.bkt.clouddn.com/autolayout4.png" alt="4.png"><br>我们看到Label整体向右偏移了一些来保证Label内容能够显示完全，这就是由于Content Compression Resistance Priority优先级大于右边距约束的优先级产生的效果</p>
+</li>
+<li><p>Content Hugging Priority的影响<br>再来看一下抗拉伸优先级的影响，我们把左右边距约束的优先级恢复到1000，左右边距改为50，看一下效果<br><img src="http://occxq9xco.bkt.clouddn.com/autolayout5.png" alt="5.png"><br>和上个🌰对比一下我们不难想到，由于 左右边距+固有宽度&lt;屏幕宽度而Content Hugging Priority(251) &lt; 边距约束的优先级(1000) ,所以系统拉谁了Label本身<br>如果我们降低右边距的优先级为240， 小于抗拉伸优先级（251），效果如下<br><img src="http://occxq9xco.bkt.clouddn.com/autolayout6.png" alt="6.png"><br>这时候系统优先满足了Label的宽度，而没有满足右边距的需求。<br>这样，约束的优先级和固有宽度优先级如何相互影响就很明确了，来看一个工作中的例子。</p>
+</li>
+</ul>
+<h2 id="再举个🌰"><a href="#再举个🌰" class="headerlink" title="再举个🌰"></a>再举个🌰</h2><p>场景还原，工作中我们常常会碰到这种需求，并排放置两个Label，左边的Label宽度根据内容适应，右边的Label距离左边Label有个固定距离，距离屏幕右边有个固定距离，在不设置优先级的情况下，我们会经常遇到奇怪的现象，要么左边的Labe被拉伸，要么被压缩，比如下图<br><img src="http://occxq9xco.bkt.clouddn.com/autolayout7.png" alt="7.png"><br>我们设置左边Label的抗压缩优先级和抗拉伸优先级都大于右边Label，效果如图<br><img src="http://occxq9xco.bkt.clouddn.com/autolayout8.png" alt="8.png"><br><img src="http://occxq9xco.bkt.clouddn.com/autolayout9.png" alt="9.png"><br>由于左边Label的抗压缩和抗拉伸优先级都高于右边Label，而且其他约束的优先级（1000）也都高于右边label的固有宽度优先级，所以系统选择拉伸或者压缩了右边的Label，实现了我们的需求。</p>
+
+      
+    </div>
+    
+  </div>
+  
+    
+    <div class="copyright">
+        <p><span>本文标题:</span><a href="/2016/11/22/iOS-AutoLayout约束的优先级/">iOS AutoLayout约束的优先级</a></p>
+        <p><span>文章作者:</span><a href="/" title="回到主页">Karl</a></p>
+        <p><span>发布时间:</span>2016-11-22, 18:56:22</p>
+        <p><span>最后更新:</span>2017-05-17, 09:03:32</p>
+        <p>
+            <span>原始链接:</span><a class="post-url" href="/2016/11/22/iOS-AutoLayout约束的优先级/" title="iOS AutoLayout约束的优先级">http://www.whisperkarl.com/2016/11/22/iOS-AutoLayout约束的优先级/</a>
+            <span class="copy-path" data-clipboard-text="原文: http://www.whisperkarl.com/2016/11/22/iOS-AutoLayout约束的优先级/　　作者: Karl" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+            <script> var clipboard = new Clipboard('.copy-path'); </script>
+        </p>
+        <p>
+            <span>许可协议:</span><i class="fa fa-creative-commons"></i> <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" title="CC BY-NC-SA 4.0 International" target = "_blank">"署名-非商用-相同方式共享 4.0"</a> 转载请保留原文链接及作者。
+        </p>
+    </div>
+
+
+
+    <nav id="article-nav">
+        
+            <div id="article-nav-newer" class="article-nav-title">
+                <a href="/2016/12/08/SDWebImage源码（一）——SDWebImage概览/">
+                    SDWebImage源码（一）——SDWebImage概览
+                </a>
+            </div>
+        
+        
+            <div id="article-nav-older" class="article-nav-title">
+                <a href="/2016/09/23/从iOS的事件响应链看TableView为什么不响应touchesBegan/">
+                    从iOS的事件响应链看TableView为什么不响应touchesBegan
+                </a>
+            </div>
+        
+    </nav>
+
+  
+</article>
+
+
+
+    
+<div class="share">
+    
+        <div class="bdsharebuttonbox">
+            <a href="#" class="fa fa-twitter bds_twi" data-cmd="twi" title="分享到推特"></a>
+            <a href="#" class="fa fa-weibo bds_tsina" data-cmd="tsina" title="分享到新浪微博"></a>
+            <a href="#" class="fa fa-qq bds_sqq" data-cmd="sqq" title="分享给 QQ 好友"></a>
+            <a href="#" class="fa fa-files-o bds_copy" data-cmd="copy" title="复制网址"></a>
+            <a href="#" class="fa fa fa-envelope-o bds_mail" data-cmd="mail" title="通过邮件分享"></a>
+            <a href="#" class="fa fa-weixin bds_weixin" data-cmd="weixin" title="生成文章二维码"></a>
+            <a href="#" class="fa fa-share-alt bds_more" data-cmd="more"></i></a>
+        </div>
+        <script>
+            window._bd_share_config={
+                "common":{"bdSnsKey":{},"bdText":"iOS AutoLayout约束的优先级　| Karl的开发随笔　","bdMini":"2","bdMiniList":false,"bdPic":"","bdStyle":"0","bdSize":"24"},"share":{}};with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];
+        </script>
+    
+
+    
+</div>
+
+
+
+
+
+
+
+    
+      <div class="duoshuo" id="comments">
+    <div id="comment-box" ></div>
+    <div class="ds-thread" id="ds-thread" data-thread-key="2016/11/22/iOS-AutoLayout约束的优先级/" data-title="iOS AutoLayout约束的优先级" data-url="http://www.whisperkarl.com/2016/11/22/iOS-AutoLayout约束的优先级/"></div>
+    <script>
+        var duoshuoQuery = {short_name:"whisperkarl"};
+        var loadComment = function(){
+            var d = document, s = d.createElement('script');
+            s.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+            s.async = true; s.charset = 'UTF-8';
+            (d.head || d.body).appendChild(s);
+        }
+
+        
+    </script>
+    
+    <script> loadComment(); </script>
+
+</div>
+    
+
+
+
+
+    <div class="scroll" id="post-nav-button">
+        
+            <a href="/2016/12/08/SDWebImage源码（一）——SDWebImage概览/" title="上一篇: SDWebImage源码（一）——SDWebImage概览">
+                <i class="fa fa-angle-left"></i>
+            </a>
+        
+
+        <a title="文章列表"><i class="fa fa-bars"></i><i class="fa fa-times"></i></a>
+
+        
+            <a href="/2016/09/23/从iOS的事件响应链看TableView为什么不响应touchesBegan/" title="下一篇: 从iOS的事件响应链看TableView为什么不响应touchesBegan">
+                <i class="fa fa-angle-right"></i>
+            </a>
+        
+    </div>
+
+    <ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2018/07/11/窥探KVO本质/">窥探KVO本质</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/12/SDWebImage源码（四）——SDWebImageManager/">SDWebImage源码（四）——SDWebImageManager</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/10/SDWebImage源码（三）——SDWebImageDownloader下载器/">SDWebImage源码（三）——SDWebImageDownloader下载器</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/09/SDWebImage源码（二）——SDImageCache缓存器/">SDWebImage源码（二）——SDImageCache缓存器</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/08/SDWebImage源码（一）——SDWebImage概览/">SDWebImage源码（一）——SDWebImage概览</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/11/22/iOS-AutoLayout约束的优先级/">iOS AutoLayout约束的优先级</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/09/23/从iOS的事件响应链看TableView为什么不响应touchesBegan/">从iOS的事件响应链看TableView为什么不响应touchesBegan</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/08/22/php基础语法知识/">php基础语法知识</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/08/12/Mac下php开发环境搭建/">Mac下php开发环境搭建</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/07/20/MAC环境下使用hexo-github搭建个人博客/">MAC环境下使用hexo+github搭建个人博客</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/07/19/iOS-自定义转场动画/">iOS 自定义转场动画</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/06/29/解决自定义导航栏导致系统导航栏消失的问题/">解决自定义导航栏导致系统导航栏消失的问题</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/06/15/Swift笔记-从Swift再看ARC以及循环引用/">Swift笔记:从Swift再看ARC以及循环引用</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/05/25/Swift笔记-关于init的总结/">Swift笔记:关于init的总结</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/05/17/Google-Maps-SDK-for-iOS-谷歌地图使用总结/">Google Maps SDK for iOS 谷歌地图使用总结</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/05/17/关于git、github和-gitignore的一些事/">关于git、github和.gitignore的一些事</a></li></ul>
+
+
+
+
+    <script>
+        
+    </script>
+</div>
+      <footer id="footer">
+    <div class="outer">
+        <div id="footer-info">
+            <div class="footer-left">
+                <i class="fa fa-copyright"></i> 
+                2015-2018 Karl
+            </div>
+            <div class="footer-right">
+                <a href="http://hexo.io/" target="_blank" title="快速、简洁且高效的博客框架">Hexo</a>  Theme <a href="https://github.com/MOxFIVE/hexo-theme-yelee" target="_blank" title="简而不减 Hexo 双栏博客主题  v3.5">Yelee</a> by MOxFIVE <i class="fa fa-heart animated infinite pulse"></i>
+            </div>
+        </div>
+        
+            <div class="visit">
+                
+                    <span id="busuanzi_container_site_pv" style='display:none'>
+                        <span id="site-visit" title="本站到访数"><i class="fa fa-user" aria-hidden="true"></i><span id="busuanzi_value_site_uv"></span>
+                        </span>
+                    </span>
+                
+                
+                    <span>| </span>
+                
+                
+                    <span id="busuanzi_container_page_pv" style='display:none'>
+                        <span id="page-visit"  title="本页阅读量"><i class="fa fa-eye animated infinite pulse" aria-hidden="true"></i><span id="busuanzi_value_page_pv"></span>
+                        </span>
+                    </span>
+                
+            </div>
+        
+    </div>
+</footer>
+    </div>
+    
+<script data-main="/js/main.js" src="//cdn.bootcss.com/require.js/2.2.0/require.min.js"></script>
+
+
+
+
+
+<div class="scroll" id="scroll">
+    <a href="#" title="返回顶部"><i class="fa fa-arrow-up"></i></a>
+    <a href="#comments" onclick="load$hide();" title="查看评论"><i class="fa fa-comments-o"></i></a>
+    <a href="#footer" title="转到底部"><i class="fa fa-arrow-down"></i></a>
+</div>
+<script>
+    // Open in New Window
+    
+        var oOpenInNew = {
+            
+            
+            
+            
+            
+            
+             archives: ".archive-article-title", 
+             miniArchives: "a.post-list-link", 
+            
+            
+             socail: ".social a" 
+        }
+        for (var x in oOpenInNew) {
+            $(oOpenInNew[x]).attr("target", "_blank");
+        }
+    
+</script>
+
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+  </div>
+</body>
+</html>

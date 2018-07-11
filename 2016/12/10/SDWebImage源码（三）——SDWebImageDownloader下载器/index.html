@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html >
+<head>
+
+    <!--[if lt IE 9]>
+        <style>body {display: none; background: none !important} </style>
+        <meta http-equiv="Refresh" Content="0; url=//outdatedbrowser.com/" />
+    <![endif]-->
+
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="format-detection" content="telephone=no" />
+<meta name="author" content="Karl" />
+
+
+
+<meta name="description" content="SDWebImageDownloaderSDWebImageDownloader完成了对网络图片的异步下载工作，准确说这个类是一个下载任务管理器，而真正的网络请求是在继承于NSOperation的SDWebImageDownloaderOperation类实现的。我们来看一下这两个类的具体实现。">
+<meta name="keywords" content="iOS">
+<meta property="og:type" content="article">
+<meta property="og:title" content="SDWebImage源码（三）——SDWebImageDownloader下载器">
+<meta property="og:url" content="http://www.whisperkarl.com/2016/12/10/SDWebImage源码（三）——SDWebImageDownloader下载器/index.html">
+<meta property="og:site_name" content="Karl的开发随笔">
+<meta property="og:description" content="SDWebImageDownloaderSDWebImageDownloader完成了对网络图片的异步下载工作，准确说这个类是一个下载任务管理器，而真正的网络请求是在继承于NSOperation的SDWebImageDownloaderOperation类实现的。我们来看一下这两个类的具体实现。">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/1642800-9cf7e9789ea361a6.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:updated_time" content="2017-05-17T01:03:32.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="SDWebImage源码（三）——SDWebImageDownloader下载器">
+<meta name="twitter:description" content="SDWebImageDownloaderSDWebImageDownloader完成了对网络图片的异步下载工作，准确说这个类是一个下载任务管理器，而真正的网络请求是在继承于NSOperation的SDWebImageDownloaderOperation类实现的。我们来看一下这两个类的具体实现。">
+<meta name="twitter:image" content="http://upload-images.jianshu.io/upload_images/1642800-9cf7e9789ea361a6.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+
+<link rel="apple-touch-icon" href= "/apple-touch-icon.png">
+
+
+    <link rel="alternate" href="/atom.xml" title="Karl的开发随笔" type="application/atom+xml">
+
+
+
+    <link rel="shortcut icon" href="/favicon.png">
+
+
+
+    <link href="//cdn.bootcss.com/animate.css/3.5.1/animate.min.css" rel="stylesheet">
+
+
+
+    <link href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.min.css" rel="stylesheet">
+
+
+
+    <script src="//cdn.bootcss.com/pace/1.0.2/pace.min.js"></script>
+    <link href="//cdn.bootcss.com/pace/1.0.2/themes/blue/pace-theme-minimal.css" rel="stylesheet">
+
+
+<link rel="stylesheet" href="/css/style.css">
+
+
+
+<link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+
+
+<title>SDWebImage源码（三）——SDWebImageDownloader下载器 | Karl的开发随笔</title>
+
+<script src="//cdn.bootcss.com/jquery/2.2.4/jquery.min.js"></script>
+<script src="//cdn.bootcss.com/clipboard.js/1.5.10/clipboard.min.js"></script>
+
+<script>
+    var yiliaConfig = {
+        fancybox: true,
+        animate: true,
+        isHome: false,
+        isPost: true,
+        isArchive: false,
+        isTag: false,
+        isCategory: false,
+        fancybox_js: "//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.min.js",
+        scrollreveal: "//cdn.bootcss.com/scrollReveal.js/3.1.4/scrollreveal.min.js",
+        search: undefined
+    }
+</script>
+
+
+    <script>
+        yiliaConfig.jquery_ui = [true, "//cdn.bootcss.com/jqueryui/1.10.4/jquery-ui.min.js", "//cdn.bootcss.com/jqueryui/1.10.4/css/jquery-ui.min.css"];
+    </script>
+
+
+
+    <script> yiliaConfig.rootUrl = "\/";</script>
+
+
+
+
+
+
+</head>
+<body>
+  <div id="container">
+    <div class="left-col">
+    <div class="overlay"></div>
+<div class="intrude-less">
+    <header id="header" class="inner">
+        <a href="/" class="profilepic">
+            <img src="/img/avatar.png" class="animated zoomIn">
+        </a>
+        <hgroup>
+          <h1 class="header-author"><a href="/">Karl</a></h1>
+        </hgroup>
+
+        
+        <p class="header-subtitle">一个程序员的自我修行</p>
+        
+
+        
+
+
+        
+
+        <div id="switch-area" class="switch-area">
+            <div class="switch-wrap">
+                <section class="switch-part switch-part1">
+                    <nav class="header-menu">
+                        <ul>
+                        
+                            <li><a href="/">主页</a></li>
+                        
+                            <li><a href="/archives/">所有文章</a></li>
+                        
+                            <li><a href="/tags/">标签云</a></li>
+                        
+                            <li><a href="/about/">关于我</a></li>
+                        
+                        </ul>
+                    </nav>
+                    <nav class="header-nav">
+                        <ul class="social">
+                            
+                                <a class="fa 新浪微博" href="http://weibo.com/1659245264/profile?rightmod=1&wvr=6&mod=personinfo&is_all=1" title="新浪微博"></a>
+                            
+                                <a class="fa GitHub" href="https://github.com/WhisperKarl" title="GitHub"></a>
+                            
+                                <a class="fa 简书" href="http://www.jianshu.com/users/d6b23f5aa337/latest_articles" title="简书"></a>
+                            
+                        </ul>
+                    </nav>
+                </section>
+                
+                
+                
+                
+                <section class="switch-part switch-part3">
+                    <div id="js-friends">
+                    
+                      <a class="main-nav-link switch-friends-link" href="https://hexo.io">Hexo</a>
+                    
+                      <a class="main-nav-link switch-friends-link" href="https://pages.github.com/">GitHub</a>
+                    
+                      <a class="main-nav-link switch-friends-link" href="http://moxfive.xyz/">MOxFIVE</a>
+                    
+                    </div>
+                </section>
+                
+
+                
+            </div>
+        </div>
+    </header>                
+</div>
+    </div>
+    <div class="mid-col">
+      <nav id="mobile-nav">
+      <div class="overlay">
+          <div class="slider-trigger"></div>
+          <h1 class="header-author js-mobile-header hide"><a href="/" title="回到主页">Karl</a></h1>
+      </div>
+    <div class="intrude-less">
+        <header id="header" class="inner">
+            <a href="/" class="profilepic">
+                <img src="/img/avatar.png" class="animated zoomIn">
+            </a>
+            <hgroup>
+              <h1 class="header-author"><a href="/" title="回到主页">Karl</a></h1>
+            </hgroup>
+            
+            <p class="header-subtitle">一个程序员的自我修行</p>
+            
+            <nav class="header-menu">
+                <ul>
+                
+                    <li><a href="/">主页</a></li>
+                
+                    <li><a href="/archives/">所有文章</a></li>
+                
+                    <li><a href="/tags/">标签云</a></li>
+                
+                    <li><a href="/about/">关于我</a></li>
+                
+                <div class="clearfix"></div>
+                </ul>
+            </nav>
+            <nav class="header-nav">
+                        <ul class="social">
+                            
+                                <a class="fa 新浪微博" target="_blank" href="http://weibo.com/1659245264/profile?rightmod=1&wvr=6&mod=personinfo&is_all=1" title="新浪微博"></a>
+                            
+                                <a class="fa GitHub" target="_blank" href="https://github.com/WhisperKarl" title="GitHub"></a>
+                            
+                                <a class="fa 简书" target="_blank" href="http://www.jianshu.com/users/d6b23f5aa337/latest_articles" title="简书"></a>
+                            
+                        </ul>
+            </nav>
+        </header>                
+    </div>
+    <link class="menu-list" tags="标签" friends="友情链接" about="关于我"/>
+</nav>
+      <div class="body-wrap"><article id="post-SDWebImage源码（三）——SDWebImageDownloader下载器" class="article article-type-post" itemscope itemprop="blogPost">
+  
+    <div class="article-meta">
+      <a href="/2016/12/10/SDWebImage源码（三）——SDWebImageDownloader下载器/" class="article-date">
+      <time datetime="2016-12-10T10:59:45.000Z" itemprop="datePublished">2016-12-10</time>
+</a>
+
+
+    </div>
+  
+  <div class="article-inner">
+    
+      <input type="hidden" class="isFancy" />
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      SDWebImage源码（三）——SDWebImageDownloader下载器
+    </h1>
+  
+
+      </header>
+      
+      <div class="article-info article-info-post">
+        
+    <div class="article-category tagcloud">
+    <a class="article-category-link" href="/categories/programming/">编程</a>
+    </div>
+
+
+        
+    <div class="article-tag tagcloud">
+        <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/iOS/">iOS</a></li></ul>
+    </div>
+
+        <div class="clearfix"></div>
+      </div>
+      
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+          
+        <h4 id="SDWebImageDownloader"><a href="#SDWebImageDownloader" class="headerlink" title="SDWebImageDownloader"></a>SDWebImageDownloader</h4><p><code>SDWebImageDownloader</code>完成了对网络图片的异步下载工作，准确说这个类是一个下载任务管理器，而真正的网络请求是在继承于<code>NSOperation</code>的<code>SDWebImageDownloaderOperation</code>类实现的。我们来看一下这两个类的具体实现。<br><a id="more"></a><br><code>SDWebImageDownloader</code>的头文件内容比较少，主要是定义了一些基本参数如下载优先级策略、最大并发数、超时时间等，比较简单，这里就不再赘述。<code>SDWebImageDownloader</code>中核心的方法是<code>- downloadImageWithURL:(NSURoptions: progress: completed:</code>，在看这个方法之前我们先看另外一个方法:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">- (void)addProgressCallback:(SDWebImageDownloaderProgressBlock)progressBlock andCompletedBlock:(SDWebImageDownloaderCompletedBlock)completedBlock forURL:(NSURL *)url createCallback:(SDWebImageNoParamsBlock)createCallback &#123;</div><div class="line">    // The URL will be used as the key to the callbacks dictionary so it cannot be nil. If it is nil immediately call the completed block with no image or data.</div><div class="line">    //如果URL为空，直接执行完成回调block并传入nil参数，结束本次请求</div><div class="line">    if (url == nil) &#123;</div><div class="line">        if (completedBlock != nil) &#123;</div><div class="line">            completedBlock(nil, nil, nil, NO);</div><div class="line">        &#125;</div><div class="line">        return;</div><div class="line">    &#125;</div><div class="line">  //NSMutableDicitonary不是线程安全的，利用GCD的barrier 保证线程安全，确保字典不会同时存取</div><div class="line">    dispatch_barrier_sync(self.barrierQueue, ^&#123;</div><div class="line">        BOOL first = NO;</div><div class="line">        if (!self.URLCallbacks[url]) &#123;</div><div class="line">            self.URLCallbacks[url] = [NSMutableArray new];</div><div class="line">            first = YES;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        // Handle single download of simultaneous download request for the same URL</div><div class="line">        //为URL创建一个唯一对应的callbacks，并赋值给self.URLCallBacks</div><div class="line">        NSMutableArray *callbacksForURL = self.URLCallbacks[url];</div><div class="line">        NSMutableDictionary *callbacks = [NSMutableDictionary new];</div><div class="line">        if (progressBlock) callbacks[kProgressCallbackKey] = [progressBlock copy];</div><div class="line">        if (completedBlock) callbacks[kCompletedCallbackKey] = [completedBlock copy];</div><div class="line">        [callbacksForURL addObject:callbacks];</div><div class="line">        self.URLCallbacks[url] = callbacksForURL;</div><div class="line"></div><div class="line">        if (first) &#123;</div><div class="line">            createCallback();</div><div class="line">        &#125;</div><div class="line">    &#125;);</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>上面这段代码猛一看一头雾水，画张结构图一看就非常明晰了</p>
+<p><img src="http://upload-images.jianshu.io/upload_images/1642800-9cf7e9789ea361a6.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="结构图.png"><br>即<code>URLCallBacks</code>字典存储的每个请求的<code>callbacksForURL</code>，在这里我有一点不明白的是为什么中间会有一层可变数组来承载<code>callbacksForURL</code>字典，因为从代码上看，每个URL请求只会被请求一次的，希望如果有明白的小伙伴留言告知~<br>走完上面这个函数，我们就能确保每个请求都能和它的<code>progressBlock</code>和<code>completedBlock</code>回调一一对应，接着回到download方法继续看：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div></pre></td><td class="code"><pre><div class="line">- (id &lt;SDWebImageOperation&gt;)downloadImageWithURL:(NSURL *)url options:(SDWebImageDownloaderOptions)options progress:(SDWebImageDownloaderProgressBlock)progressBlock completed:(SDWebImageDownloaderCompletedBlock)completedBlock &#123;</div><div class="line">    __block SDWebImageDownloaderOperation *operation;</div><div class="line">    __weak SDWebImageDownloader *wself = self;</div><div class="line"></div><div class="line">    [self addProgressCallback:progressBlock andCompletedBlock:completedBlock forURL:url createCallback:^&#123;</div><div class="line">        //设置请求超时时间</div><div class="line">        NSTimeInterval timeoutInterval = wself.downloadTimeout;</div><div class="line">        if (timeoutInterval == 0.0) &#123;</div><div class="line">            timeoutInterval = 15.0;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        // In order to prevent from potential duplicate caching (NSURLCache + SDImageCache) we disable the cache for image requests if told otherwise</div><div class="line">      //初始化URLRequest</div><div class="line">        NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:url cachePolicy:(options &amp; SDWebImageDownloaderUseNSURLCache ? NSURLRequestUseProtocolCachePolicy : NSURLRequestReloadIgnoringLocalCacheData) timeoutInterval:timeoutInterval];</div><div class="line">        request.HTTPShouldHandleCookies = (options &amp; SDWebImageDownloaderHandleCookies);</div><div class="line">        request.HTTPShouldUsePipelining = YES;</div><div class="line">        if (wself.headersFilter) &#123;</div><div class="line">            request.allHTTPHeaderFields = wself.headersFilter(url, [wself.HTTPHeaders copy]);</div><div class="line">        &#125;</div><div class="line">        else &#123;</div><div class="line">            request.allHTTPHeaderFields = wself.HTTPHeaders;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">       //初始化SDWebImageDownloaderOperation并处理回调，网络请求以及数据处理在SDWebImageDownloaderOperation类中进行</div><div class="line">        operation = [[SDWebImageDownloaderOperation alloc] initWithRequest:request</div><div class="line">                                                                   options:options</div><div class="line">                                                                  progress:^(NSInteger receivedSize, NSInteger expectedSize) &#123;</div><div class="line">                                                                  //拿到URL对应的progressBlock并赋值</div><div class="line">                                                                      SDWebImageDownloader *sself = wself;</div><div class="line">                                                                      if (!sself) return;</div><div class="line">                                                                      NSArray *callbacksForURL = [sself callbacksForURL:url];</div><div class="line">                                                                      for (NSDictionary *callbacks in callbacksForURL) &#123;</div><div class="line">                                                                          SDWebImageDownloaderProgressBlock callback = callbacks[kProgressCallbackKey];</div><div class="line">                                                                          if (callback) callback(receivedSize, expectedSize);</div><div class="line">                                                                      &#125;</div><div class="line">                                                                  &#125;</div><div class="line">                                                                 completed:^(UIImage *image, NSData *data, NSError *error, BOOL finished) &#123;</div><div class="line">                                                                     //执行下载完成回调</div><div class="line">                                                                     SDWebImageDownloader *sself = wself;</div><div class="line">                                                                     if (!sself) return;</div><div class="line">                                                                     NSArray *callbacksForURL = [sself callbacksForURL:url];</div><div class="line">                                                                     if (finished) &#123;</div><div class="line">                                                                         //移除URL对应的callback</div><div class="line">                                                                         [sself removeCallbacksForURL:url];</div><div class="line">                                                                     &#125;</div><div class="line">                                                                     for (NSDictionary *callbacks in callbacksForURL) &#123;</div><div class="line">                                                                         SDWebImageDownloaderCompletedBlock callback = callbacks[kCompletedCallbackKey];</div><div class="line">                                                                         if (callback) callback(image, data, error, finished);</div><div class="line">                                                                     &#125;</div><div class="line">                                                                 &#125;</div><div class="line">                                                                 cancelled:^&#123;</div><div class="line">                                                                     SDWebImageDownloader *sself = wself;</div><div class="line">                                                                     if (!sself) return;</div><div class="line">                                                                     [sself removeCallbacksForURL:url];</div><div class="line">                                                                 &#125;];</div><div class="line">        //服务器身份验证，一般用不到</div><div class="line">       if (wself.urlCredential) &#123;</div><div class="line">            operation.credential = wself.urlCredential;</div><div class="line">        &#125; else if (wself.username &amp;&amp; wself.password) &#123;</div><div class="line">            operation.credential = [NSURLCredential credentialWithUser:wself.username password:wself.password persistence:NSURLCredentialPersistenceForSession];</div><div class="line">        &#125;</div><div class="line">        </div><div class="line">        //设置线程优先级</div><div class="line">        if (options &amp; SDWebImageDownloaderHighPriority) &#123;</div><div class="line">            operation.queuePriority = NSOperationQueuePriorityHigh;</div><div class="line">        &#125; else if (options &amp; SDWebImageDownloaderLowPriority) &#123;</div><div class="line">            operation.queuePriority = NSOperationQueuePriorityLow;</div><div class="line">        &#125;</div><div class="line">      </div><div class="line">        //添加任务到串行队列，开启下载任务</div><div class="line">        [wself.downloadQueue addOperation:operation];</div><div class="line">        //根据配置的执行顺序（先进先出还是先进后出）添加线程依赖</div><div class="line">        if (wself.executionOrder == SDWebImageDownloaderLIFOExecutionOrder) &#123;</div><div class="line">            // Emulate LIFO execution order by systematically adding new operations as last operation&apos;s dependency</div><div class="line">            [wself.lastAddedOperation addDependency:operation];</div><div class="line">            wself.lastAddedOperation = operation;</div><div class="line">        &#125;</div><div class="line">    &#125;];</div><div class="line">    return operation;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>downloadImageWithURL方法的内容不多，通过一步步的拆分我们可以看的比较明了，下面继续看看<code>SDWebImageDownloaderOperation</code>这个类中做了哪些事情</p>
+<h4 id="SDWebImageDownloaderOperation"><a href="#SDWebImageDownloaderOperation" class="headerlink" title="SDWebImageDownloaderOperation"></a>SDWebImageDownloaderOperation</h4><p><code>SDWebImageDownloaderOperation</code>继承于<code>NSOperation</code>重写了<code>start</code>方法，在<code>start</code>方法里创建了<code>NSURLConnection</code>链接。先看看对外开放的初始化方法做了哪些工作：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line">- (id)initWithRequest:(NSURLRequest *)request</div><div class="line">              options:(SDWebImageDownloaderOptions)options</div><div class="line">             progress:(SDWebImageDownloaderProgressBlock)progressBlock</div><div class="line">            completed:(SDWebImageDownloaderCompletedBlock)completedBlock</div><div class="line">            cancelled:(SDWebImageNoParamsBlock)cancelBlock &#123;</div><div class="line">    if ((self = [super init])) &#123;</div><div class="line">         //在SDWebImageDownloader中创建的NSMutableURLRequest对象</div><div class="line">        _request = request;</div><div class="line">        //是否解图片</div><div class="line">        _shouldDecompressImages = YES;</div><div class="line">        //验证挑战</div><div class="line">        _shouldUseCredentialStorage = YES;</div><div class="line">         //下载策略</div><div class="line">        _options = options;</div><div class="line">        _progressBlock = [progressBlock copy];</div><div class="line">        _completedBlock = [completedBlock copy];</div><div class="line">        _cancelBlock = [cancelBlock copy];</div><div class="line">        _executing = NO;</div><div class="line">        _finished = NO;</div><div class="line">        _expectedSize = 0;</div><div class="line">        //用来标记response是不是从cache中获取的</div><div class="line">        responseFromCached = YES; // Initially wrong until `connection:willCacheResponse:` is called or not called</div><div class="line">    &#125;</div><div class="line">    return self;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>初始化主要还是对一些参数做了配置，下面看start方法：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div></pre></td><td class="code"><pre><div class="line">- (void)start &#123;</div><div class="line">    @synchronized (self) &#123;</div><div class="line">        if (self.isCancelled) &#123;</div><div class="line">        //如果是取消状态，重置参数并设置为完成状态</div><div class="line">            self.finished = YES;</div><div class="line">            [self reset];</div><div class="line">            return;</div><div class="line">        &#125;</div><div class="line">//开启后台下载任务</div><div class="line">#if TARGET_OS_IPHONE &amp;&amp; __IPHONE_OS_VERSION_MAX_ALLOWED &gt;= __IPHONE_4_0</div><div class="line">        //先验证UIApplication实体是否存在</div><div class="line">        Class UIApplicationClass = NSClassFromString(@&quot;UIApplication&quot;);</div><div class="line">        BOOL hasApplication = UIApplicationClass &amp;&amp; [UIApplicationClass respondsToSelector:@selector(sharedApplication)];</div><div class="line">        //如果存在且允许后台下载</div><div class="line">        if (hasApplication &amp;&amp; [self shouldContinueWhenAppEntersBackground]) &#123;</div><div class="line">            __weak __typeof__ (self) wself = self;</div><div class="line">            UIApplication * app = [UIApplicationClass performSelector:@selector(sharedApplication)];</div><div class="line">            self.backgroundTaskId = [app beginBackgroundTaskWithExpirationHandler:^&#123;</div><div class="line">                //这个回调是后台任务将被系统杀死时执行，这里取消了下载任务</div><div class="line">                __strong __typeof (wself) sself = wself;</div><div class="line">  </div><div class="line">                if (sself) &#123;</div><div class="line">                    [sself cancel];</div><div class="line"></div><div class="line">                    [app endBackgroundTask:sself.backgroundTaskId];</div><div class="line">                    sself.backgroundTaskId = UIBackgroundTaskInvalid;</div><div class="line">                &#125;</div><div class="line">            &#125;];</div><div class="line">        &#125;</div><div class="line">#endif</div><div class="line">        </div><div class="line">        //构建NSURLConnection向服务器发送请求</div><div class="line">        self.executing = YES;</div><div class="line">        self.connection = [[NSURLConnection alloc] initWithRequest:self.request delegate:self startImmediately:NO];</div><div class="line">        self.thread = [NSThread currentThread];</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    [self.connection start];</div><div class="line"></div><div class="line">    if (self.connection) &#123;</div><div class="line">        if (self.progressBlock) &#123;</div><div class="line">            self.progressBlock(0, NSURLResponseUnknownLength);</div><div class="line">        &#125;</div><div class="line">        dispatch_async(dispatch_get_main_queue(), ^&#123;</div><div class="line">            [[NSNotificationCenter defaultCenter] postNotificationName:SDWebImageDownloadStartNotification object:self];</div><div class="line">        &#125;);</div><div class="line"></div><div class="line">        //需要手动开启runloop，connection才能正常接收delegate回调</div><div class="line">        if (floor(NSFoundationVersionNumber) &lt;= NSFoundationVersionNumber_iOS_5_1) &#123;</div><div class="line">            // Make sure to run the runloop in our background thread so it can process downloaded data</div><div class="line">            // Note: we use a timeout to work around an issue with NSURLConnection cancel under iOS 5</div><div class="line">            //       not waking up the runloop, leading to dead threads (see https://github.com/rs/SDWebImage/issues/466)</div><div class="line">            CFRunLoopRunInMode(kCFRunLoopDefaultMode, 10, false);</div><div class="line">        &#125;</div><div class="line">        else &#123;</div><div class="line">            CFRunLoopRun();</div><div class="line">        &#125;</div><div class="line">      </div><div class="line">        //runloop关闭之后才会继续执行下面的代码</div><div class="line">        if (!self.isFinished) &#123;</div><div class="line">            //请求失败</div><div class="line">            [self.connection cancel];</div><div class="line">            [self connection:self.connection didFailWithError:[NSError errorWithDomain:NSURLErrorDomain code:NSURLErrorTimedOut userInfo:@&#123;NSURLErrorFailingURLErrorKey : self.request.URL&#125;]];</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    else &#123;</div><div class="line">        if (self.completedBlock) &#123;</div><div class="line">        //NSURLConnection创建失败，执行Error回调</div><div class="line">            self.completedBlock(nil, nil, [NSError errorWithDomain:NSURLErrorDomain code:0 userInfo:@&#123;NSLocalizedDescriptionKey : @&quot;Connection can&apos;t be initialized&quot;&#125;], YES);</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">//到这里，不管下载成功与否，都注销之前注册的后台任务</div><div class="line">#if TARGET_OS_IPHONE &amp;&amp; __IPHONE_OS_VERSION_MAX_ALLOWED &gt;= __IPHONE_4_0</div><div class="line">    Class UIApplicationClass = NSClassFromString(@&quot;UIApplication&quot;);</div><div class="line">    if(!UIApplicationClass || ![UIApplicationClass respondsToSelector:@selector(sharedApplication)]) &#123;</div><div class="line">        return;</div><div class="line">    &#125;</div><div class="line">    if (self.backgroundTaskId != UIBackgroundTaskInvalid) &#123;</div><div class="line">        UIApplication * app = [UIApplication performSelector:@selector(sharedApplication)];</div><div class="line">        [app endBackgroundTask:self.backgroundTaskId];</div><div class="line">        self.backgroundTaskId = UIBackgroundTaskInvalid;</div><div class="line">    &#125;</div><div class="line">#endif</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>start方法是实现并发<code>NSOperation</code>的核心方法，在这个方法里创建了<code>NSURLConnection</code>请求并发起请求。在这里有个疑问就是，为什么开启runloop之后的代码一定会等到runloop关闭以后才执行，看来需要仔细研习一下runloop的只是了，或者有明白的小伙伴留言告知一下~<br>重点看一下<code>NSURLConnection</code>的两个代理方法：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">- (void)connection:(NSURLConnection *)connection didReceiveData:(NSData *)data &#123;</div><div class="line">    //把新接收到的数据拼接到imageData后面</div><div class="line">    [self.imageData appendData:data];</div><div class="line">    //如果options值为SDWebImageDownloaderProgressiveDownload，即边下载边显示，而不是下载完成一次洗显示，则需要随着接收到data数据立即进行图片转化，具体转化方法这里不做探究</div><div class="line">    if ((self.options &amp; SDWebImageDownloaderProgressiveDownload) &amp;&amp; self.expectedSize &gt; 0 &amp;&amp; self.completedBlock) &#123;</div><div class="line">         // The following code is from http://www.cocoaintheshell.com/2011/05/progressive-images-download-imageio/</div><div class="line">        // Thanks to the author @Nyx0uf</div><div class="line"></div><div class="line">        // Get the total bytes downloaded</div><div class="line">        </div><div class="line">        const NSInteger totalSize = self.imageData.length;</div><div class="line"></div><div class="line">        // Update the data source, we must pass ALL the data, not just the new bytes</div><div class="line">        CGImageSourceRef imageSource = CGImageSourceCreateWithData((__bridge CFDataRef)self.imageData, NULL);</div><div class="line"></div><div class="line">        if (width + height == 0) &#123;</div><div class="line">            CFDictionaryRef properties = CGImageSourceCopyPropertiesAtIndex(imageSource, 0, NULL);</div><div class="line">            if (properties) &#123;</div><div class="line">                NSInteger orientationValue = -1;</div><div class="line">                CFTypeRef val = CFDictionaryGetValue(properties, kCGImagePropertyPixelHeight);</div><div class="line">                if (val) CFNumberGetValue(val, kCFNumberLongType, &amp;height);</div><div class="line">                val = CFDictionaryGetValue(properties, kCGImagePropertyPixelWidth);</div><div class="line">                if (val) CFNumberGetValue(val, kCFNumberLongType, &amp;width);</div><div class="line">                val = CFDictionaryGetValue(properties, kCGImagePropertyOrientation);</div><div class="line">                if (val) CFNumberGetValue(val, kCFNumberNSIntegerType, &amp;orientationValue);</div><div class="line">                CFRelease(properties);</div><div class="line"></div><div class="line">                // When we draw to Core Graphics, we lose orientation information,</div><div class="line">                // which means the image below born of initWithCGIImage will be</div><div class="line">                // oriented incorrectly sometimes. (Unlike the image born of initWithData</div><div class="line">                // in connectionDidFinishLoading.) So save it here and pass it on later.</div><div class="line">                orientation = [[self class] orientationFromPropertyValue:(orientationValue == -1 ? 1 : orientationValue)];</div><div class="line">            &#125;</div><div class="line"></div><div class="line">        &#125;</div><div class="line"></div><div class="line">        if (width + height &gt; 0 &amp;&amp; totalSize &lt; self.expectedSize) &#123;</div><div class="line">            // Create the image</div><div class="line">            CGImageRef partialImageRef = CGImageSourceCreateImageAtIndex(imageSource, 0, NULL);</div><div class="line"></div><div class="line">#ifdef TARGET_OS_IPHONE</div><div class="line">            // Workaround for iOS anamorphic image</div><div class="line">            if (partialImageRef) &#123;</div><div class="line">                const size_t partialHeight = CGImageGetHeight(partialImageRef);</div><div class="line">                CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();</div><div class="line">                CGContextRef bmContext = CGBitmapContextCreate(NULL, width, height, 8, width * 4, colorSpace, kCGBitmapByteOrderDefault | kCGImageAlphaPremultipliedFirst);</div><div class="line">                CGColorSpaceRelease(colorSpace);</div><div class="line">                if (bmContext) &#123;</div><div class="line">                    CGContextDrawImage(bmContext, (CGRect)&#123;.origin.x = 0.0f, .origin.y = 0.0f, .size.width = width, .size.height = partialHeight&#125;, partialImageRef);</div><div class="line">                    CGImageRelease(partialImageRef);</div><div class="line">                    partialImageRef = CGBitmapContextCreateImage(bmContext);</div><div class="line">                    CGContextRelease(bmContext);</div><div class="line">                &#125;</div><div class="line">                else &#123;</div><div class="line">                    CGImageRelease(partialImageRef);</div><div class="line">                    partialImageRef = nil;</div><div class="line">                &#125;</div><div class="line">            &#125;</div><div class="line">#endif</div><div class="line"></div><div class="line">            if (partialImageRef) &#123;</div><div class="line">                UIImage *image = [UIImage imageWithCGImage:partialImageRef scale:1 orientation:orientation];</div><div class="line">                NSString *key = [[SDWebImageManager sharedManager] cacheKeyForURL:self.request.URL];</div><div class="line">                UIImage *scaledImage = [self scaledImageForKey:key image:image];</div><div class="line">                if (self.shouldDecompressImages) &#123;</div><div class="line">                    image = [UIImage decodedImageWithImage:scaledImage];</div><div class="line">                &#125;</div><div class="line">                else &#123;</div><div class="line">                    image = scaledImage;</div><div class="line">                &#125;</div><div class="line">                CGImageRelease(partialImageRef);</div><div class="line">                dispatch_main_sync_safe(^&#123;</div><div class="line">                    if (self.completedBlock) &#123;</div><div class="line">                        self.completedBlock(image, nil, nil, NO);</div><div class="line">                    &#125;</div><div class="line">                &#125;);</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        CFRelease(imageSource);</div><div class="line">    &#125;</div><div class="line">    //下载进度回调</div><div class="line">    if (self.progressBlock) &#123;</div><div class="line">        self.progressBlock(self.imageData.length, self.expectedSize);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>下载完成的代理方法：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div></pre></td><td class="code"><pre><div class="line">- (void)connectionDidFinishLoading:(NSURLConnection *)aConnection &#123;</div><div class="line">    SDWebImageDownloaderCompletedBlock completionBlock = self.completedBlock;</div><div class="line">    @synchronized(self) &#123;</div><div class="line">         //停止runloop 释放资源</div><div class="line">        CFRunLoopStop(CFRunLoopGetCurrent());</div><div class="line">        self.thread = nil;</div><div class="line">        self.connection = nil;</div><div class="line">        dispatch_async(dispatch_get_main_queue(), ^&#123;</div><div class="line">            [[NSNotificationCenter defaultCenter] postNotificationName:SDWebImageDownloadStopNotification object:self];</div><div class="line">            [[NSNotificationCenter defaultCenter] postNotificationName:SDWebImageDownloadFinishNotification object:self];</div><div class="line">        &#125;);</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    if (![[NSURLCache sharedURLCache] cachedResponseForRequest:_request]) &#123;</div><div class="line">        responseFromCached = NO;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    if (completionBlock) &#123;</div><div class="line">        if (self.options &amp; SDWebImageDownloaderIgnoreCachedResponse &amp;&amp; responseFromCached) &#123;</div><div class="line">            //如果options选择了SDWebImageDownloaderIgnoreCachedResponse且response是从URLCache中取到的，则成功回调返回空值（为何？）</div><div class="line">            completionBlock(nil, nil, nil, YES);</div><div class="line">        &#125; else if (self.imageData) &#123;</div><div class="line">            UIImage *image = [UIImage sd_imageWithData:self.imageData];</div><div class="line">            NSString *key = [[SDWebImageManager sharedManager] cacheKeyForURL:self.request.URL];</div><div class="line">             //根据手机屏幕分辨率对图片进行缩放</div><div class="line">            image = [self scaledImageForKey:key image:image];</div><div class="line">            </div><div class="line">            // Do not force decoding animated GIFs</div><div class="line">            if (!image.images) &#123;</div><div class="line">                 //如果不是gif图，解压图片</div><div class="line">                if (self.shouldDecompressImages) &#123;</div><div class="line">                    image = [UIImage decodedImageWithImage:image];</div><div class="line">                &#125;</div><div class="line">            &#125;</div><div class="line">            if (CGSizeEqualToSize(image.size, CGSizeZero)) &#123;</div><div class="line">                //如果图片是0像素，返回nil并报错</div><div class="line">                completionBlock(nil, nil, [NSError errorWithDomain:SDWebImageErrorDomain code:0 userInfo:@&#123;NSLocalizedDescriptionKey : @&quot;Downloaded image has 0 pixels&quot;&#125;], YES);</div><div class="line">            &#125;</div><div class="line">            else &#123;</div><div class="line">                completionBlock(image, self.imageData, nil, YES);</div><div class="line">            &#125;</div><div class="line">        &#125; else &#123;</div><div class="line">            completionBlock(nil, nil, [NSError errorWithDomain:SDWebImageErrorDomain code:0 userInfo:@&#123;NSLocalizedDescriptionKey : @&quot;Image data is nil&quot;&#125;], YES);</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    //释放资源</div><div class="line">    self.completionBlock = nil;</div><div class="line">    [self done];</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>以上就是<code>SDWebImageDownloader</code>的核心内容。</p>
+
+      
+    </div>
+    
+  </div>
+  
+    
+    <div class="copyright">
+        <p><span>本文标题:</span><a href="/2016/12/10/SDWebImage源码（三）——SDWebImageDownloader下载器/">SDWebImage源码（三）——SDWebImageDownloader下载器</a></p>
+        <p><span>文章作者:</span><a href="/" title="回到主页">Karl</a></p>
+        <p><span>发布时间:</span>2016-12-10, 18:59:45</p>
+        <p><span>最后更新:</span>2017-05-17, 09:03:32</p>
+        <p>
+            <span>原始链接:</span><a class="post-url" href="/2016/12/10/SDWebImage源码（三）——SDWebImageDownloader下载器/" title="SDWebImage源码（三）——SDWebImageDownloader下载器">http://www.whisperkarl.com/2016/12/10/SDWebImage源码（三）——SDWebImageDownloader下载器/</a>
+            <span class="copy-path" data-clipboard-text="原文: http://www.whisperkarl.com/2016/12/10/SDWebImage源码（三）——SDWebImageDownloader下载器/　　作者: Karl" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+            <script> var clipboard = new Clipboard('.copy-path'); </script>
+        </p>
+        <p>
+            <span>许可协议:</span><i class="fa fa-creative-commons"></i> <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" title="CC BY-NC-SA 4.0 International" target = "_blank">"署名-非商用-相同方式共享 4.0"</a> 转载请保留原文链接及作者。
+        </p>
+    </div>
+
+
+
+    <nav id="article-nav">
+        
+            <div id="article-nav-newer" class="article-nav-title">
+                <a href="/2016/12/12/SDWebImage源码（四）——SDWebImageManager/">
+                    SDWebImage源码（四）——SDWebImageManager
+                </a>
+            </div>
+        
+        
+            <div id="article-nav-older" class="article-nav-title">
+                <a href="/2016/12/09/SDWebImage源码（二）——SDImageCache缓存器/">
+                    SDWebImage源码（二）——SDImageCache缓存器
+                </a>
+            </div>
+        
+    </nav>
+
+  
+</article>
+
+
+
+    
+<div class="share">
+    
+        <div class="bdsharebuttonbox">
+            <a href="#" class="fa fa-twitter bds_twi" data-cmd="twi" title="分享到推特"></a>
+            <a href="#" class="fa fa-weibo bds_tsina" data-cmd="tsina" title="分享到新浪微博"></a>
+            <a href="#" class="fa fa-qq bds_sqq" data-cmd="sqq" title="分享给 QQ 好友"></a>
+            <a href="#" class="fa fa-files-o bds_copy" data-cmd="copy" title="复制网址"></a>
+            <a href="#" class="fa fa fa-envelope-o bds_mail" data-cmd="mail" title="通过邮件分享"></a>
+            <a href="#" class="fa fa-weixin bds_weixin" data-cmd="weixin" title="生成文章二维码"></a>
+            <a href="#" class="fa fa-share-alt bds_more" data-cmd="more"></i></a>
+        </div>
+        <script>
+            window._bd_share_config={
+                "common":{"bdSnsKey":{},"bdText":"SDWebImage源码（三）——SDWebImageDownloader下载器　| Karl的开发随笔　","bdMini":"2","bdMiniList":false,"bdPic":"","bdStyle":"0","bdSize":"24"},"share":{}};with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];
+        </script>
+    
+
+    
+</div>
+
+
+
+
+
+
+
+    
+      <div class="duoshuo" id="comments">
+    <div id="comment-box" ></div>
+    <div class="ds-thread" id="ds-thread" data-thread-key="2016/12/10/SDWebImage源码（三）——SDWebImageDownloader下载器/" data-title="SDWebImage源码（三）——SDWebImageDownloader下载器" data-url="http://www.whisperkarl.com/2016/12/10/SDWebImage源码（三）——SDWebImageDownloader下载器/"></div>
+    <script>
+        var duoshuoQuery = {short_name:"whisperkarl"};
+        var loadComment = function(){
+            var d = document, s = d.createElement('script');
+            s.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+            s.async = true; s.charset = 'UTF-8';
+            (d.head || d.body).appendChild(s);
+        }
+
+        
+    </script>
+    
+    <script> loadComment(); </script>
+
+</div>
+    
+
+
+
+
+    <div class="scroll" id="post-nav-button">
+        
+            <a href="/2016/12/12/SDWebImage源码（四）——SDWebImageManager/" title="上一篇: SDWebImage源码（四）——SDWebImageManager">
+                <i class="fa fa-angle-left"></i>
+            </a>
+        
+
+        <a title="文章列表"><i class="fa fa-bars"></i><i class="fa fa-times"></i></a>
+
+        
+            <a href="/2016/12/09/SDWebImage源码（二）——SDImageCache缓存器/" title="下一篇: SDWebImage源码（二）——SDImageCache缓存器">
+                <i class="fa fa-angle-right"></i>
+            </a>
+        
+    </div>
+
+    <ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2018/07/11/窥探KVO本质/">窥探KVO本质</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/12/SDWebImage源码（四）——SDWebImageManager/">SDWebImage源码（四）——SDWebImageManager</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/10/SDWebImage源码（三）——SDWebImageDownloader下载器/">SDWebImage源码（三）——SDWebImageDownloader下载器</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/09/SDWebImage源码（二）——SDImageCache缓存器/">SDWebImage源码（二）——SDImageCache缓存器</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/08/SDWebImage源码（一）——SDWebImage概览/">SDWebImage源码（一）——SDWebImage概览</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/11/22/iOS-AutoLayout约束的优先级/">iOS AutoLayout约束的优先级</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/09/23/从iOS的事件响应链看TableView为什么不响应touchesBegan/">从iOS的事件响应链看TableView为什么不响应touchesBegan</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/08/22/php基础语法知识/">php基础语法知识</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/08/12/Mac下php开发环境搭建/">Mac下php开发环境搭建</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/07/20/MAC环境下使用hexo-github搭建个人博客/">MAC环境下使用hexo+github搭建个人博客</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/07/19/iOS-自定义转场动画/">iOS 自定义转场动画</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/06/29/解决自定义导航栏导致系统导航栏消失的问题/">解决自定义导航栏导致系统导航栏消失的问题</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/06/15/Swift笔记-从Swift再看ARC以及循环引用/">Swift笔记:从Swift再看ARC以及循环引用</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/05/25/Swift笔记-关于init的总结/">Swift笔记:关于init的总结</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/05/17/Google-Maps-SDK-for-iOS-谷歌地图使用总结/">Google Maps SDK for iOS 谷歌地图使用总结</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/05/17/关于git、github和-gitignore的一些事/">关于git、github和.gitignore的一些事</a></li></ul>
+
+
+
+
+    <script>
+        
+    </script>
+</div>
+      <footer id="footer">
+    <div class="outer">
+        <div id="footer-info">
+            <div class="footer-left">
+                <i class="fa fa-copyright"></i> 
+                2015-2018 Karl
+            </div>
+            <div class="footer-right">
+                <a href="http://hexo.io/" target="_blank" title="快速、简洁且高效的博客框架">Hexo</a>  Theme <a href="https://github.com/MOxFIVE/hexo-theme-yelee" target="_blank" title="简而不减 Hexo 双栏博客主题  v3.5">Yelee</a> by MOxFIVE <i class="fa fa-heart animated infinite pulse"></i>
+            </div>
+        </div>
+        
+            <div class="visit">
+                
+                    <span id="busuanzi_container_site_pv" style='display:none'>
+                        <span id="site-visit" title="本站到访数"><i class="fa fa-user" aria-hidden="true"></i><span id="busuanzi_value_site_uv"></span>
+                        </span>
+                    </span>
+                
+                
+                    <span>| </span>
+                
+                
+                    <span id="busuanzi_container_page_pv" style='display:none'>
+                        <span id="page-visit"  title="本页阅读量"><i class="fa fa-eye animated infinite pulse" aria-hidden="true"></i><span id="busuanzi_value_page_pv"></span>
+                        </span>
+                    </span>
+                
+            </div>
+        
+    </div>
+</footer>
+    </div>
+    
+<script data-main="/js/main.js" src="//cdn.bootcss.com/require.js/2.2.0/require.min.js"></script>
+
+
+
+
+
+<div class="scroll" id="scroll">
+    <a href="#" title="返回顶部"><i class="fa fa-arrow-up"></i></a>
+    <a href="#comments" onclick="load$hide();" title="查看评论"><i class="fa fa-comments-o"></i></a>
+    <a href="#footer" title="转到底部"><i class="fa fa-arrow-down"></i></a>
+</div>
+<script>
+    // Open in New Window
+    
+        var oOpenInNew = {
+            
+            
+            
+            
+            
+            
+             archives: ".archive-article-title", 
+             miniArchives: "a.post-list-link", 
+            
+            
+             socail: ".social a" 
+        }
+        for (var x in oOpenInNew) {
+            $(oOpenInNew[x]).attr("target", "_blank");
+        }
+    
+</script>
+
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+  </div>
+</body>
+</html>

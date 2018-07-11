@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html >
+<head>
+
+    <!--[if lt IE 9]>
+        <style>body {display: none; background: none !important} </style>
+        <meta http-equiv="Refresh" Content="0; url=//outdatedbrowser.com/" />
+    <![endif]-->
+
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="format-detection" content="telephone=no" />
+<meta name="author" content="Karl" />
+
+
+
+<meta name="description" content="最近公司项目比较清闲，闲暇时间想学习学习php开发，毕竟不能吊死在一棵树上再加上最近iOS行情不太好，记录一下php的学习历程。mac上php开发环境有两种配置方法，一种是自己一步步手动配置Apache+php+MySql+ phpMyAdmin，另外一种方法是直接下载xampp一键安装，直接集成了所有的开发环境，很便捷暴力。这里主要是记录一下前者的集成步骤。">
+<meta name="keywords" content="php">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Mac下php开发环境搭建">
+<meta property="og:url" content="http://www.whisperkarl.com/2016/08/12/Mac下php开发环境搭建/index.html">
+<meta property="og:site_name" content="Karl的开发随笔">
+<meta property="og:description" content="最近公司项目比较清闲，闲暇时间想学习学习php开发，毕竟不能吊死在一棵树上再加上最近iOS行情不太好，记录一下php的学习历程。mac上php开发环境有两种配置方法，一种是自己一步步手动配置Apache+php+MySql+ phpMyAdmin，另外一种方法是直接下载xampp一键安装，直接集成了所有的开发环境，很便捷暴力。这里主要是记录一下前者的集成步骤。">
+<meta property="og:image" content="http://occxq9xco.bkt.clouddn.com/1642800-ab41b819794d7c8f.png">
+<meta property="og:image" content="http://occxq9xco.bkt.clouddn.com/1642800-e26aee23f72bc062.png">
+<meta property="og:image" content="http://occxq9xco.bkt.clouddn.com/1642800-a1ec806448bff3b4.png">
+<meta property="og:image" content="http://occxq9xco.bkt.clouddn.com/1642800-a26ebb79a6d6265a.png">
+<meta property="og:updated_time" content="2017-05-17T01:03:32.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Mac下php开发环境搭建">
+<meta name="twitter:description" content="最近公司项目比较清闲，闲暇时间想学习学习php开发，毕竟不能吊死在一棵树上再加上最近iOS行情不太好，记录一下php的学习历程。mac上php开发环境有两种配置方法，一种是自己一步步手动配置Apache+php+MySql+ phpMyAdmin，另外一种方法是直接下载xampp一键安装，直接集成了所有的开发环境，很便捷暴力。这里主要是记录一下前者的集成步骤。">
+<meta name="twitter:image" content="http://occxq9xco.bkt.clouddn.com/1642800-ab41b819794d7c8f.png">
+
+<link rel="apple-touch-icon" href= "/apple-touch-icon.png">
+
+
+    <link rel="alternate" href="/atom.xml" title="Karl的开发随笔" type="application/atom+xml">
+
+
+
+    <link rel="shortcut icon" href="/favicon.png">
+
+
+
+    <link href="//cdn.bootcss.com/animate.css/3.5.1/animate.min.css" rel="stylesheet">
+
+
+
+    <link href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.min.css" rel="stylesheet">
+
+
+
+    <script src="//cdn.bootcss.com/pace/1.0.2/pace.min.js"></script>
+    <link href="//cdn.bootcss.com/pace/1.0.2/themes/blue/pace-theme-minimal.css" rel="stylesheet">
+
+
+<link rel="stylesheet" href="/css/style.css">
+
+
+
+<link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+
+
+<title>Mac下php开发环境搭建 | Karl的开发随笔</title>
+
+<script src="//cdn.bootcss.com/jquery/2.2.4/jquery.min.js"></script>
+<script src="//cdn.bootcss.com/clipboard.js/1.5.10/clipboard.min.js"></script>
+
+<script>
+    var yiliaConfig = {
+        fancybox: true,
+        animate: true,
+        isHome: false,
+        isPost: true,
+        isArchive: false,
+        isTag: false,
+        isCategory: false,
+        fancybox_js: "//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.min.js",
+        scrollreveal: "//cdn.bootcss.com/scrollReveal.js/3.1.4/scrollreveal.min.js",
+        search: undefined
+    }
+</script>
+
+
+    <script>
+        yiliaConfig.jquery_ui = [true, "//cdn.bootcss.com/jqueryui/1.10.4/jquery-ui.min.js", "//cdn.bootcss.com/jqueryui/1.10.4/css/jquery-ui.min.css"];
+    </script>
+
+
+
+    <script> yiliaConfig.rootUrl = "\/";</script>
+
+
+
+
+
+
+</head>
+<body>
+  <div id="container">
+    <div class="left-col">
+    <div class="overlay"></div>
+<div class="intrude-less">
+    <header id="header" class="inner">
+        <a href="/" class="profilepic">
+            <img src="/img/avatar.png" class="animated zoomIn">
+        </a>
+        <hgroup>
+          <h1 class="header-author"><a href="/">Karl</a></h1>
+        </hgroup>
+
+        
+        <p class="header-subtitle">一个程序员的自我修行</p>
+        
+
+        
+
+
+        
+
+        <div id="switch-area" class="switch-area">
+            <div class="switch-wrap">
+                <section class="switch-part switch-part1">
+                    <nav class="header-menu">
+                        <ul>
+                        
+                            <li><a href="/">主页</a></li>
+                        
+                            <li><a href="/archives/">所有文章</a></li>
+                        
+                            <li><a href="/tags/">标签云</a></li>
+                        
+                            <li><a href="/about/">关于我</a></li>
+                        
+                        </ul>
+                    </nav>
+                    <nav class="header-nav">
+                        <ul class="social">
+                            
+                                <a class="fa 新浪微博" href="http://weibo.com/1659245264/profile?rightmod=1&wvr=6&mod=personinfo&is_all=1" title="新浪微博"></a>
+                            
+                                <a class="fa GitHub" href="https://github.com/WhisperKarl" title="GitHub"></a>
+                            
+                                <a class="fa 简书" href="http://www.jianshu.com/users/d6b23f5aa337/latest_articles" title="简书"></a>
+                            
+                        </ul>
+                    </nav>
+                </section>
+                
+                
+                
+                
+                <section class="switch-part switch-part3">
+                    <div id="js-friends">
+                    
+                      <a class="main-nav-link switch-friends-link" href="https://hexo.io">Hexo</a>
+                    
+                      <a class="main-nav-link switch-friends-link" href="https://pages.github.com/">GitHub</a>
+                    
+                      <a class="main-nav-link switch-friends-link" href="http://moxfive.xyz/">MOxFIVE</a>
+                    
+                    </div>
+                </section>
+                
+
+                
+            </div>
+        </div>
+    </header>                
+</div>
+    </div>
+    <div class="mid-col">
+      <nav id="mobile-nav">
+      <div class="overlay">
+          <div class="slider-trigger"></div>
+          <h1 class="header-author js-mobile-header hide"><a href="/" title="回到主页">Karl</a></h1>
+      </div>
+    <div class="intrude-less">
+        <header id="header" class="inner">
+            <a href="/" class="profilepic">
+                <img src="/img/avatar.png" class="animated zoomIn">
+            </a>
+            <hgroup>
+              <h1 class="header-author"><a href="/" title="回到主页">Karl</a></h1>
+            </hgroup>
+            
+            <p class="header-subtitle">一个程序员的自我修行</p>
+            
+            <nav class="header-menu">
+                <ul>
+                
+                    <li><a href="/">主页</a></li>
+                
+                    <li><a href="/archives/">所有文章</a></li>
+                
+                    <li><a href="/tags/">标签云</a></li>
+                
+                    <li><a href="/about/">关于我</a></li>
+                
+                <div class="clearfix"></div>
+                </ul>
+            </nav>
+            <nav class="header-nav">
+                        <ul class="social">
+                            
+                                <a class="fa 新浪微博" target="_blank" href="http://weibo.com/1659245264/profile?rightmod=1&wvr=6&mod=personinfo&is_all=1" title="新浪微博"></a>
+                            
+                                <a class="fa GitHub" target="_blank" href="https://github.com/WhisperKarl" title="GitHub"></a>
+                            
+                                <a class="fa 简书" target="_blank" href="http://www.jianshu.com/users/d6b23f5aa337/latest_articles" title="简书"></a>
+                            
+                        </ul>
+            </nav>
+        </header>                
+    </div>
+    <link class="menu-list" tags="标签" friends="友情链接" about="关于我"/>
+</nav>
+      <div class="body-wrap"><article id="post-Mac下php开发环境搭建" class="article article-type-post" itemscope itemprop="blogPost">
+  
+    <div class="article-meta">
+      <a href="/2016/08/12/Mac下php开发环境搭建/" class="article-date">
+      <time datetime="2016-08-12T03:23:05.000Z" itemprop="datePublished">2016-08-12</time>
+</a>
+
+
+    </div>
+  
+  <div class="article-inner">
+    
+      <input type="hidden" class="isFancy" />
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Mac下php开发环境搭建
+    </h1>
+  
+
+      </header>
+      
+      <div class="article-info article-info-post">
+        
+    <div class="article-category tagcloud">
+    <a class="article-category-link" href="/categories/programming/">编程</a>
+    </div>
+
+
+        
+    <div class="article-tag tagcloud">
+        <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/php/">php</a></li></ul>
+    </div>
+
+        <div class="clearfix"></div>
+      </div>
+      
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+          
+        <blockquote>
+<p>最近公司项目比较清闲，闲暇时间想学习学习php开发，毕竟不能吊死在一棵树上再加上最近iOS行情不太好，记录一下php的学习历程。<br>mac上php开发环境有两种配置方法，一种是自己一步步手动配置Apache+php+MySql+ phpMyAdmin，另外一种方法是直接下载xampp一键安装，直接集成了所有的开发环境，很便捷暴力。这里主要是记录一下前者的集成步骤。</p>
+</blockquote>
+<a id="more"></a>
+<h4 id="一、-启动Apache"><a href="#一、-启动Apache" class="headerlink" title="一、 启动Apache"></a>一、 启动Apache</h4><p>Mac系统已经集成了Apache环境，我们只需要一行指令就可开启Apache服务。<br>终端输入<br><code>sudo apachectl start</code><br>输入电脑密码，即可开启阿帕奇<br><code>sudo apachectl -v</code><br>可以查看版本信息<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">Server version: Apache/2.4.18 (Unix)</div><div class="line">Server built:   Feb 20 2016 20:03:19</div></pre></td></tr></table></figure></p>
+<p>此时在浏览器输入<code>http://localhost</code>，会出现It works! ，就说明阿帕奇开启成功。</p>
+<h4 id="二、-运行php"><a href="#二、-运行php" class="headerlink" title="二、 运行php"></a>二、 运行php</h4><ol>
+<li>找到Apache的配置文件，终端输入<br><code>open /etc/apache2/</code><br>找到http.conf文件，用文本编辑器打开，搜索 libexec/apache2/libphp5.so，如图</li>
+</ol>
+<p><img src="http://occxq9xco.bkt.clouddn.com/1642800-ab41b819794d7c8f.png" alt="QQ20160811-0@2x.png"><br>把搜索结果这一行前面的#去掉，保存文件。如果这里提示没有权限的话，选中该文件，右击点击显示简介，点击右下角的小锁解锁，然后点击左边的加号，把自己的账户添加进去并把权限设置为读与写，如果还是不行的话，就一层一层的往上修改文件夹的权限，知道可以修改为止。</p>
+<ol>
+<li>重启Apache<br><code>sudo apachectl restart</code></li>
+<li>替换网页文件<br><code>open /Library/WebServer/Documents/</code><br>复制index.html.en文件并重命名为info.php</li>
+<li>打开info.php ，输入你想输入的php代码再次重启Apache，在浏览器输入<a href="http://localhost/info.php，就可以看到代码运行结果了。" target="_blank" rel="external">http://localhost/info.php，就可以看到代码运行结果了。</a></li>
+</ol>
+<h4 id="三、-配置MySql"><a href="#三、-配置MySql" class="headerlink" title="三、 配置MySql"></a>三、 配置MySql</h4><ol>
+<li>去<a href="http://dev.mysql.com/downloads/mysql/" target="_blank" rel="external">http://dev.mysql.com/downloads/mysql/</a> 下载对应的安装包。我选择的是<br><img src="http://occxq9xco.bkt.clouddn.com/1642800-e26aee23f72bc062.png" alt="QQ20160811-1@2x.png"><br>下载完成后进行安装，安装过程中会提示一个临时密码，要暂存一下，如图<br><img src="http://occxq9xco.bkt.clouddn.com/1642800-a1ec806448bff3b4.png" alt="712523-232499c71bb79fcb.png"><br>安装完成后可以在Mac系统中选择启动或者关闭MySql。</li>
+<li>将MySql加入系统环境变量<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">(1).进入/usr/local/mysql/bin,查看此目录下是否有mysql</div><div class="line">(2).执行vim ~/.bash_profile</div><div class="line">    在该文件中添加mysql/bin的目录，如下图：</div><div class="line">    PATH=$PATH:/usr/local/mysql/bin</div><div class="line">添加完成后，按esc，然后输入wq保存。</div><div class="line">最后在命令行输入source ~/.bash_profile</div></pre></td></tr></table></figure>
+</li>
+</ol>
+<p><img src="http://occxq9xco.bkt.clouddn.com/1642800-a26ebb79a6d6265a.png" alt="712523-42aa5aabaeb7b2bb.png"></p>
+<ol>
+<li>修改mysql密码，先登录MySql<br><code>mysql -uroot -p</code><br>输入的密码就是刚才暂存的临时密码<br>登陆成功后，通过下面命令修改密码<br><code>SET PASSWORD FOR &#39;root&#39;@&#39;localhost&#39; = PASSWORD(&#39;newpass&#39;);</code></li>
+</ol>
+<h4 id="四、使用phpMyAdmin"><a href="#四、使用phpMyAdmin" class="headerlink" title="四、使用phpMyAdmin"></a>四、使用phpMyAdmin</h4><ol>
+<li>下载phpMyAdmin<br><a href="https://www.phpmyadmin.net/downloads/" target="_blank" rel="external">https://www.phpmyadmin.net/downloads/</a></li>
+<li>将下载好的文件解压，放进<code>/Library/WebServer/Documents/</code>文件夹中并命名为phpmyadmin</li>
+<li>复制<code>/Library/WebServer/Documents/phpmyadmin</code>中的<code>config.sample.inc.php</code>，并命名为<code>config.inc.php</code>，并放在当前文件夹下。</li>
+<li>编辑config.inc.php，修改其中的<br><code>$cfg[&#39;Servers&#39;]]$i][&#39;host&#39;] = &#39;localhost&#39;;</code><br>为<br><code>$cfg[&#39;Servers&#39;]]$i][&#39;host&#39;] = &#39;127.0.0.1&#39;;</code>即可</li>
+<li>在浏览器输入<a href="http://localhost/phpmyadmin" target="_blank" rel="external">http://localhost/phpmyadmin</a> ,输入用户名root和你刚才设置的密码，即可登录。</li>
+</ol>
+<p>到此php的开发环境就配置完成了，如果觉得太麻烦了话，还是直接下载xampp吧，非常强大！</p>
+<p>参考: <a href="http://my.oschina.net/joanfen/blog/171109" target="_blank" rel="external">http://my.oschina.net/joanfen/blog/171109</a><br>        <a href="http://www.jianshu.com/p/fd3aae701db9" target="_blank" rel="external">http://www.jianshu.com/p/fd3aae701db9</a></p>
+
+      
+    </div>
+    
+  </div>
+  
+    
+    <div class="copyright">
+        <p><span>本文标题:</span><a href="/2016/08/12/Mac下php开发环境搭建/">Mac下php开发环境搭建</a></p>
+        <p><span>文章作者:</span><a href="/" title="回到主页">Karl</a></p>
+        <p><span>发布时间:</span>2016-08-12, 11:23:05</p>
+        <p><span>最后更新:</span>2017-05-17, 09:03:32</p>
+        <p>
+            <span>原始链接:</span><a class="post-url" href="/2016/08/12/Mac下php开发环境搭建/" title="Mac下php开发环境搭建">http://www.whisperkarl.com/2016/08/12/Mac下php开发环境搭建/</a>
+            <span class="copy-path" data-clipboard-text="原文: http://www.whisperkarl.com/2016/08/12/Mac下php开发环境搭建/　　作者: Karl" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+            <script> var clipboard = new Clipboard('.copy-path'); </script>
+        </p>
+        <p>
+            <span>许可协议:</span><i class="fa fa-creative-commons"></i> <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" title="CC BY-NC-SA 4.0 International" target = "_blank">"署名-非商用-相同方式共享 4.0"</a> 转载请保留原文链接及作者。
+        </p>
+    </div>
+
+
+
+    <nav id="article-nav">
+        
+            <div id="article-nav-newer" class="article-nav-title">
+                <a href="/2016/08/22/php基础语法知识/">
+                    php基础语法知识
+                </a>
+            </div>
+        
+        
+            <div id="article-nav-older" class="article-nav-title">
+                <a href="/2016/07/20/MAC环境下使用hexo-github搭建个人博客/">
+                    MAC环境下使用hexo+github搭建个人博客
+                </a>
+            </div>
+        
+    </nav>
+
+  
+</article>
+
+
+
+    
+<div class="share">
+    
+        <div class="bdsharebuttonbox">
+            <a href="#" class="fa fa-twitter bds_twi" data-cmd="twi" title="分享到推特"></a>
+            <a href="#" class="fa fa-weibo bds_tsina" data-cmd="tsina" title="分享到新浪微博"></a>
+            <a href="#" class="fa fa-qq bds_sqq" data-cmd="sqq" title="分享给 QQ 好友"></a>
+            <a href="#" class="fa fa-files-o bds_copy" data-cmd="copy" title="复制网址"></a>
+            <a href="#" class="fa fa fa-envelope-o bds_mail" data-cmd="mail" title="通过邮件分享"></a>
+            <a href="#" class="fa fa-weixin bds_weixin" data-cmd="weixin" title="生成文章二维码"></a>
+            <a href="#" class="fa fa-share-alt bds_more" data-cmd="more"></i></a>
+        </div>
+        <script>
+            window._bd_share_config={
+                "common":{"bdSnsKey":{},"bdText":"Mac下php开发环境搭建　| Karl的开发随笔　","bdMini":"2","bdMiniList":false,"bdPic":"","bdStyle":"0","bdSize":"24"},"share":{}};with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];
+        </script>
+    
+
+    
+</div>
+
+
+
+
+
+
+
+    
+      <div class="duoshuo" id="comments">
+    <div id="comment-box" ></div>
+    <div class="ds-thread" id="ds-thread" data-thread-key="2016/08/12/Mac下php开发环境搭建/" data-title="Mac下php开发环境搭建" data-url="http://www.whisperkarl.com/2016/08/12/Mac下php开发环境搭建/"></div>
+    <script>
+        var duoshuoQuery = {short_name:"whisperkarl"};
+        var loadComment = function(){
+            var d = document, s = d.createElement('script');
+            s.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+            s.async = true; s.charset = 'UTF-8';
+            (d.head || d.body).appendChild(s);
+        }
+
+        
+    </script>
+    
+    <script> loadComment(); </script>
+
+</div>
+    
+
+
+
+
+    <div class="scroll" id="post-nav-button">
+        
+            <a href="/2016/08/22/php基础语法知识/" title="上一篇: php基础语法知识">
+                <i class="fa fa-angle-left"></i>
+            </a>
+        
+
+        <a title="文章列表"><i class="fa fa-bars"></i><i class="fa fa-times"></i></a>
+
+        
+            <a href="/2016/07/20/MAC环境下使用hexo-github搭建个人博客/" title="下一篇: MAC环境下使用hexo+github搭建个人博客">
+                <i class="fa fa-angle-right"></i>
+            </a>
+        
+    </div>
+
+    <ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2018/07/11/窥探KVO本质/">窥探KVO本质</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/12/SDWebImage源码（四）——SDWebImageManager/">SDWebImage源码（四）——SDWebImageManager</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/10/SDWebImage源码（三）——SDWebImageDownloader下载器/">SDWebImage源码（三）——SDWebImageDownloader下载器</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/09/SDWebImage源码（二）——SDImageCache缓存器/">SDWebImage源码（二）——SDImageCache缓存器</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/08/SDWebImage源码（一）——SDWebImage概览/">SDWebImage源码（一）——SDWebImage概览</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/11/22/iOS-AutoLayout约束的优先级/">iOS AutoLayout约束的优先级</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/09/23/从iOS的事件响应链看TableView为什么不响应touchesBegan/">从iOS的事件响应链看TableView为什么不响应touchesBegan</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/08/22/php基础语法知识/">php基础语法知识</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/08/12/Mac下php开发环境搭建/">Mac下php开发环境搭建</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/07/20/MAC环境下使用hexo-github搭建个人博客/">MAC环境下使用hexo+github搭建个人博客</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/07/19/iOS-自定义转场动画/">iOS 自定义转场动画</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/06/29/解决自定义导航栏导致系统导航栏消失的问题/">解决自定义导航栏导致系统导航栏消失的问题</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/06/15/Swift笔记-从Swift再看ARC以及循环引用/">Swift笔记:从Swift再看ARC以及循环引用</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/05/25/Swift笔记-关于init的总结/">Swift笔记:关于init的总结</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/05/17/Google-Maps-SDK-for-iOS-谷歌地图使用总结/">Google Maps SDK for iOS 谷歌地图使用总结</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/05/17/关于git、github和-gitignore的一些事/">关于git、github和.gitignore的一些事</a></li></ul>
+
+
+
+
+    <script>
+        
+    </script>
+</div>
+      <footer id="footer">
+    <div class="outer">
+        <div id="footer-info">
+            <div class="footer-left">
+                <i class="fa fa-copyright"></i> 
+                2015-2018 Karl
+            </div>
+            <div class="footer-right">
+                <a href="http://hexo.io/" target="_blank" title="快速、简洁且高效的博客框架">Hexo</a>  Theme <a href="https://github.com/MOxFIVE/hexo-theme-yelee" target="_blank" title="简而不减 Hexo 双栏博客主题  v3.5">Yelee</a> by MOxFIVE <i class="fa fa-heart animated infinite pulse"></i>
+            </div>
+        </div>
+        
+            <div class="visit">
+                
+                    <span id="busuanzi_container_site_pv" style='display:none'>
+                        <span id="site-visit" title="本站到访数"><i class="fa fa-user" aria-hidden="true"></i><span id="busuanzi_value_site_uv"></span>
+                        </span>
+                    </span>
+                
+                
+                    <span>| </span>
+                
+                
+                    <span id="busuanzi_container_page_pv" style='display:none'>
+                        <span id="page-visit"  title="本页阅读量"><i class="fa fa-eye animated infinite pulse" aria-hidden="true"></i><span id="busuanzi_value_page_pv"></span>
+                        </span>
+                    </span>
+                
+            </div>
+        
+    </div>
+</footer>
+    </div>
+    
+<script data-main="/js/main.js" src="//cdn.bootcss.com/require.js/2.2.0/require.min.js"></script>
+
+
+
+
+
+<div class="scroll" id="scroll">
+    <a href="#" title="返回顶部"><i class="fa fa-arrow-up"></i></a>
+    <a href="#comments" onclick="load$hide();" title="查看评论"><i class="fa fa-comments-o"></i></a>
+    <a href="#footer" title="转到底部"><i class="fa fa-arrow-down"></i></a>
+</div>
+<script>
+    // Open in New Window
+    
+        var oOpenInNew = {
+            
+            
+            
+            
+            
+            
+             archives: ".archive-article-title", 
+             miniArchives: "a.post-list-link", 
+            
+            
+             socail: ".social a" 
+        }
+        for (var x in oOpenInNew) {
+            $(oOpenInNew[x]).attr("target", "_blank");
+        }
+    
+</script>
+
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+  </div>
+</body>
+</html>

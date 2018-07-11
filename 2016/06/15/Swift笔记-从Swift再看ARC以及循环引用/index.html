@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html >
+<head>
+
+    <!--[if lt IE 9]>
+        <style>body {display: none; background: none !important} </style>
+        <meta http-equiv="Refresh" Content="0; url=//outdatedbrowser.com/" />
+    <![endif]-->
+
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="format-detection" content="telephone=no" />
+<meta name="author" content="Karl" />
+
+
+
+<meta name="description" content="自动引用计数(ARC)Swift中ARC的原理同OC中是相同的，简单来讲就是当实例不再被使用（引用计数为0）时，实例会被释放。为确保实例不会被提前销毁而引起程序崩溃，ARC会跟踪和计算每一个实例被多少属性、常量、和变量引用，无论是将实例赋值给属性、常量还是变量，它们都会对实例保持强引用，只要强引用还在，实例就不会被销毁。">
+<meta name="keywords" content="iOS,Swift">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Swift笔记:从Swift再看ARC以及循环引用">
+<meta property="og:url" content="http://www.whisperkarl.com/2016/06/15/Swift笔记-从Swift再看ARC以及循环引用/index.html">
+<meta property="og:site_name" content="Karl的开发随笔">
+<meta property="og:description" content="自动引用计数(ARC)Swift中ARC的原理同OC中是相同的，简单来讲就是当实例不再被使用（引用计数为0）时，实例会被释放。为确保实例不会被提前销毁而引起程序崩溃，ARC会跟踪和计算每一个实例被多少属性、常量、和变量引用，无论是将实例赋值给属性、常量还是变量，它们都会对实例保持强引用，只要强引用还在，实例就不会被销毁。">
+<meta property="og:image" content="http://occxq9xco.bkt.clouddn.com/cycle01.jpg">
+<meta property="og:image" content="http://occxq9xco.bkt.clouddn.com/cycle02.jpg">
+<meta property="og:updated_time" content="2017-05-17T01:03:32.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Swift笔记:从Swift再看ARC以及循环引用">
+<meta name="twitter:description" content="自动引用计数(ARC)Swift中ARC的原理同OC中是相同的，简单来讲就是当实例不再被使用（引用计数为0）时，实例会被释放。为确保实例不会被提前销毁而引起程序崩溃，ARC会跟踪和计算每一个实例被多少属性、常量、和变量引用，无论是将实例赋值给属性、常量还是变量，它们都会对实例保持强引用，只要强引用还在，实例就不会被销毁。">
+<meta name="twitter:image" content="http://occxq9xco.bkt.clouddn.com/cycle01.jpg">
+
+<link rel="apple-touch-icon" href= "/apple-touch-icon.png">
+
+
+    <link rel="alternate" href="/atom.xml" title="Karl的开发随笔" type="application/atom+xml">
+
+
+
+    <link rel="shortcut icon" href="/favicon.png">
+
+
+
+    <link href="//cdn.bootcss.com/animate.css/3.5.1/animate.min.css" rel="stylesheet">
+
+
+
+    <link href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.min.css" rel="stylesheet">
+
+
+
+    <script src="//cdn.bootcss.com/pace/1.0.2/pace.min.js"></script>
+    <link href="//cdn.bootcss.com/pace/1.0.2/themes/blue/pace-theme-minimal.css" rel="stylesheet">
+
+
+<link rel="stylesheet" href="/css/style.css">
+
+
+
+<link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+
+
+<title>Swift笔记:从Swift再看ARC以及循环引用 | Karl的开发随笔</title>
+
+<script src="//cdn.bootcss.com/jquery/2.2.4/jquery.min.js"></script>
+<script src="//cdn.bootcss.com/clipboard.js/1.5.10/clipboard.min.js"></script>
+
+<script>
+    var yiliaConfig = {
+        fancybox: true,
+        animate: true,
+        isHome: false,
+        isPost: true,
+        isArchive: false,
+        isTag: false,
+        isCategory: false,
+        fancybox_js: "//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.min.js",
+        scrollreveal: "//cdn.bootcss.com/scrollReveal.js/3.1.4/scrollreveal.min.js",
+        search: undefined
+    }
+</script>
+
+
+    <script>
+        yiliaConfig.jquery_ui = [true, "//cdn.bootcss.com/jqueryui/1.10.4/jquery-ui.min.js", "//cdn.bootcss.com/jqueryui/1.10.4/css/jquery-ui.min.css"];
+    </script>
+
+
+
+    <script> yiliaConfig.rootUrl = "\/";</script>
+
+
+
+
+
+
+</head>
+<body>
+  <div id="container">
+    <div class="left-col">
+    <div class="overlay"></div>
+<div class="intrude-less">
+    <header id="header" class="inner">
+        <a href="/" class="profilepic">
+            <img src="/img/avatar.png" class="animated zoomIn">
+        </a>
+        <hgroup>
+          <h1 class="header-author"><a href="/">Karl</a></h1>
+        </hgroup>
+
+        
+        <p class="header-subtitle">一个程序员的自我修行</p>
+        
+
+        
+
+
+        
+
+        <div id="switch-area" class="switch-area">
+            <div class="switch-wrap">
+                <section class="switch-part switch-part1">
+                    <nav class="header-menu">
+                        <ul>
+                        
+                            <li><a href="/">主页</a></li>
+                        
+                            <li><a href="/archives/">所有文章</a></li>
+                        
+                            <li><a href="/tags/">标签云</a></li>
+                        
+                            <li><a href="/about/">关于我</a></li>
+                        
+                        </ul>
+                    </nav>
+                    <nav class="header-nav">
+                        <ul class="social">
+                            
+                                <a class="fa 新浪微博" href="http://weibo.com/1659245264/profile?rightmod=1&wvr=6&mod=personinfo&is_all=1" title="新浪微博"></a>
+                            
+                                <a class="fa GitHub" href="https://github.com/WhisperKarl" title="GitHub"></a>
+                            
+                                <a class="fa 简书" href="http://www.jianshu.com/users/d6b23f5aa337/latest_articles" title="简书"></a>
+                            
+                        </ul>
+                    </nav>
+                </section>
+                
+                
+                
+                
+                <section class="switch-part switch-part3">
+                    <div id="js-friends">
+                    
+                      <a class="main-nav-link switch-friends-link" href="https://hexo.io">Hexo</a>
+                    
+                      <a class="main-nav-link switch-friends-link" href="https://pages.github.com/">GitHub</a>
+                    
+                      <a class="main-nav-link switch-friends-link" href="http://moxfive.xyz/">MOxFIVE</a>
+                    
+                    </div>
+                </section>
+                
+
+                
+            </div>
+        </div>
+    </header>                
+</div>
+    </div>
+    <div class="mid-col">
+      <nav id="mobile-nav">
+      <div class="overlay">
+          <div class="slider-trigger"></div>
+          <h1 class="header-author js-mobile-header hide"><a href="/" title="回到主页">Karl</a></h1>
+      </div>
+    <div class="intrude-less">
+        <header id="header" class="inner">
+            <a href="/" class="profilepic">
+                <img src="/img/avatar.png" class="animated zoomIn">
+            </a>
+            <hgroup>
+              <h1 class="header-author"><a href="/" title="回到主页">Karl</a></h1>
+            </hgroup>
+            
+            <p class="header-subtitle">一个程序员的自我修行</p>
+            
+            <nav class="header-menu">
+                <ul>
+                
+                    <li><a href="/">主页</a></li>
+                
+                    <li><a href="/archives/">所有文章</a></li>
+                
+                    <li><a href="/tags/">标签云</a></li>
+                
+                    <li><a href="/about/">关于我</a></li>
+                
+                <div class="clearfix"></div>
+                </ul>
+            </nav>
+            <nav class="header-nav">
+                        <ul class="social">
+                            
+                                <a class="fa 新浪微博" target="_blank" href="http://weibo.com/1659245264/profile?rightmod=1&wvr=6&mod=personinfo&is_all=1" title="新浪微博"></a>
+                            
+                                <a class="fa GitHub" target="_blank" href="https://github.com/WhisperKarl" title="GitHub"></a>
+                            
+                                <a class="fa 简书" target="_blank" href="http://www.jianshu.com/users/d6b23f5aa337/latest_articles" title="简书"></a>
+                            
+                        </ul>
+            </nav>
+        </header>                
+    </div>
+    <link class="menu-list" tags="标签" friends="友情链接" about="关于我"/>
+</nav>
+      <div class="body-wrap"><article id="post-Swift笔记-从Swift再看ARC以及循环引用" class="article article-type-post" itemscope itemprop="blogPost">
+  
+    <div class="article-meta">
+      <a href="/2016/06/15/Swift笔记-从Swift再看ARC以及循环引用/" class="article-date">
+      <time datetime="2016-06-15T12:17:06.000Z" itemprop="datePublished">2016-06-15</time>
+</a>
+
+
+    </div>
+  
+  <div class="article-inner">
+    
+      <input type="hidden" class="isFancy" />
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Swift笔记:从Swift再看ARC以及循环引用
+    </h1>
+  
+
+      </header>
+      
+      <div class="article-info article-info-post">
+        
+    <div class="article-category tagcloud">
+    <a class="article-category-link" href="/categories/programming/">编程</a>
+    </div>
+
+
+        
+    <div class="article-tag tagcloud">
+        <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Swift/">Swift</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/iOS/">iOS</a></li></ul>
+    </div>
+
+        <div class="clearfix"></div>
+      </div>
+      
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+          
+        <h1 id="自动引用计数-ARC"><a href="#自动引用计数-ARC" class="headerlink" title="自动引用计数(ARC)"></a>自动引用计数(ARC)</h1><p>Swift中ARC的原理同OC中是相同的，简单来讲就是当实例不再被使用（引用计数为0）时，实例会被释放。<br>为确保实例不会被提前销毁而引起程序崩溃，ARC会跟踪和计算每一个实例被多少属性、常量、和变量引用，无论是将实例赋值给属性、常量还是变量，它们都会对实例保持强引用，只要强引用还在，实例就不会被销毁。<br><a id="more"></a></p>
+<h1 id="类实例之间的循环引用"><a href="#类实例之间的循环引用" class="headerlink" title="类实例之间的循环引用"></a>类实例之间的循环引用</h1><p>当两个实例互相强引用对方的时候，就会造成循环引用，任何一方都无法被正常释放。<br>举个例子:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div></pre></td><td class="code"><pre><div class="line">class Person &#123;</div><div class="line">let name: String</div><div class="line">init(name: String) &#123; self.name = name &#125;</div><div class="line">var apartment: Apartment?</div><div class="line">deinit&#123;print&quot;\(name) is being deinitialized&quot;&#125;</div><div class="line">&#125;</div><div class="line">class Apartment &#123;</div><div class="line">let number: Int</div><div class="line">init(number: Int) &#123; self.number = number &#125;</div><div class="line">var tenant: Person?</div><div class="line">deinit&#123;print&quot;apartment is being deinitialized&quot;&#125;</div><div class="line">&#125;</div><div class="line">var john: Person?</div><div class="line">var number73: Apartment?</div><div class="line">john = Person(name: &quot;John Appleseed</div><div class="line"></div><div class="line">number73 = Apartment(number: 73)</div><div class="line">john.apartment = number73</div><div class="line">number73.tenant = john</div><div class="line">john = nil</div><div class="line">number73 = nil</div></pre></td></tr></table></figure></p>
+<p>运行可以看出，由于<code>john</code>有一个指向<code>Person</code>的强引用，而number73有一个指向<code>Apartment</code>的强引用，所以都无法释放。<br>强引用关系如图所示：<br><img src="http://occxq9xco.bkt.clouddn.com/cycle01.jpg" alt="53CBCE63-80C5-4E3B-A6D6-816C3FD0E0BD.png"><br>置为nil后，如图所示：</p>
+<p><img src="http://occxq9xco.bkt.clouddn.com/cycle02.jpg" alt="9BE6751A-2355-4DD2-AE2A-3A3300DDC561.png"></p>
+<h2 id="实例之间强引用的解决方法"><a href="#实例之间强引用的解决方法" class="headerlink" title="实例之间强引用的解决方法"></a>实例之间强引用的解决方法</h2><ul>
+<li><p>用<code>weak</code>修饰，适用于引用可以为nil的一方。如上面例子中，<code>apartment</code>可以为空，因此可以用<code>weak</code>修饰<code>tenant</code>:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">class Apartment &#123;</div><div class="line">let number: Int</div><div class="line">init(number: Int) &#123; self.number = number &#125;</div><div class="line">weak var tenant: Person?</div><div class="line">deinit&#123;print&quot;apartment is being deinitialized&quot;&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+</li>
+<li><p>用<code>unowned</code>修饰，适用于一方的引用不能为 <code>nil</code>的情形。如下面的例子，没个信用卡必定会有一个主人，因此信用卡类中的<code>customer</code>用<code>unowned</code>来修饰以解决循环引用</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line">class Customer &#123;</div><div class="line">let name: String</div><div class="line">var card: CreditCard?</div><div class="line">init(name: String) &#123;</div><div class="line">self.name = name</div><div class="line">&#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">class CreditCard &#123;</div><div class="line">let number: UInt64</div><div class="line">unowned let customer: Customer</div><div class="line">init(number: UInt64, customer: Customer) &#123;</div><div class="line">self.number = number</div><div class="line">self.customer = customer</div><div class="line">&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+</li>
+<li><p><code>unowned</code>和隐式解包的可选属性结合使用，适用于双方都不能为nil都有值的情况。如下面的例子，每个国家都会有城市，每个城市也都会属于某个国家：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line">class Country &#123;</div><div class="line">let name: String</div><div class="line">let capitalCity: City!</div><div class="line">init(name: String, capitalName: String) &#123;</div><div class="line">self.name = name</div><div class="line">self.capitalCity = City(name: capitalName, country: self)</div><div class="line">&#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">class City &#123;</div><div class="line">let name: String</div><div class="line">unowned let country: Country</div><div class="line">init(name: String, country: Country) &#123;</div><div class="line">self.name = name</div><div class="line">self.country = country</div><div class="line">&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+</li>
+</ul>
+<h1 id="闭包引起的循环引用"><a href="#闭包引起的循环引用" class="headerlink" title="闭包引起的循环引用"></a>闭包引起的循环引用</h1><p>循环引用还会发生在当你将一个闭包赋值给实例的某个属性，而且闭包中又使用了这个实例（类使用OCblock中使用了self）。<br>产生的原因和类相似，因为闭包同类一样都是引用类型。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line">class HTMLElement&#123;</div><div class="line">let name: String</div><div class="line">let text: String?</div><div class="line"></div><div class="line">lazy var asHTML: Void -&gt; String = &#123;</div><div class="line">if let text = self.text &#123;</div><div class="line">return &quot;&lt;\(self.name)&gt;\(text)&lt;/\(self.name)&gt;&quot;</div><div class="line">&#125;else&#123;</div><div class="line">return&quot;&lt;\(self.name)/&gt;&quot;</div><div class="line">&#125;</div><div class="line">&#125;</div><div class="line">init(name: String, text: String? = nil)&#123;</div><div class="line">self.name = name</div><div class="line">self.text = text</div><div class="line">&#125;</div><div class="line"></div><div class="line">deinit&#123;</div><div class="line">print(&quot;\(name) is being deinitialized&quot;)</div><div class="line">&#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">var paragraph: HTMLElement? = HTMLElement(name: &quot;p&quot;, text: &quot;hello,world&quot;)</div><div class="line">print(paragraph!.asHTML())</div><div class="line">paragraph = nil</div></pre></td></tr></table></figure></p>
+<p>在这个例子中<code>asHTML</code>属性持有了闭包的强引用，而闭包中又使用了<code>self</code>引用了<code>self.name</code>和<code>self.text</code>，因此闭包捕获了self，这以为了闭包反过来持有了实例的强引用。这样就产生了循环引用</p>
+<h2 id="解决闭包引起的循环引用"><a href="#解决闭包引起的循环引用" class="headerlink" title="解决闭包引起的循环引用"></a>解决闭包引起的循环引用</h2><p>解决方法是定义闭包的捕获列表，在捕获列表中对对象进行<code>weak</code>或者<code>unowned</code>修饰。</p>
+<ul>
+<li><p>如果闭包有参数列表和返回类型，把捕获列表放在它们前面：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">lazy var someClosure: (Int, String) -&gt; String = &#123;</div><div class="line">[unowned self, weak someInstance] (index: Int, stringToProcess: String) -&gt; String in</div><div class="line">// closure body goes here</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+</li>
+<li><p>如果闭包没有指明参数列表和返回类型，即它们会通过上下文推断，那么可以把捕获列表和关键字<code>in</code>写在闭包最开始的地方：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">lazy var someClosure: Void -&gt; String = &#123;</div><div class="line">[unowned self, weak someInstance] in</div><div class="line">// closure body goes here</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>对于上面的例子，我们可以这样修改:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div></pre></td><td class="code"><pre><div class="line">class HTMLElement&#123;</div><div class="line">let name: String</div><div class="line">let text: String?</div><div class="line"></div><div class="line">lazy var asHTML: Void -&gt; String = &#123;</div><div class="line">[unowned self] in //--&gt;无主值捕获 防止循环引用</div><div class="line">if let text = self.text &#123;</div><div class="line">return &quot;&lt;\(self.name)&gt;\(text)&lt;/\(self.name)&gt;&quot;</div><div class="line">&#125;else&#123;</div><div class="line">return&quot;&lt;\(self.name)/&gt;&quot;</div><div class="line">&#125;</div><div class="line">&#125;</div><div class="line">init(name: String, text: String? = nil)&#123;</div><div class="line">self.name = name</div><div class="line">self.text = text</div><div class="line">&#125;</div><div class="line"></div><div class="line">deinit&#123;</div><div class="line">print(&quot;\(name) is being deinitialized&quot;)</div><div class="line">&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>参考资料:<a href="https://developer.apple.com/library/ios/documentation/Swift/Conceptual/Swift_Programming_Language/index.html#//apple_ref/doc/uid/TP40014097-CH3-ID0]" target="_blank" rel="external">Thte Swift Programming Language</a></p>
+
+      
+    </div>
+    
+  </div>
+  
+    
+    <div class="copyright">
+        <p><span>本文标题:</span><a href="/2016/06/15/Swift笔记-从Swift再看ARC以及循环引用/">Swift笔记:从Swift再看ARC以及循环引用</a></p>
+        <p><span>文章作者:</span><a href="/" title="回到主页">Karl</a></p>
+        <p><span>发布时间:</span>2016-06-15, 20:17:06</p>
+        <p><span>最后更新:</span>2017-05-17, 09:03:32</p>
+        <p>
+            <span>原始链接:</span><a class="post-url" href="/2016/06/15/Swift笔记-从Swift再看ARC以及循环引用/" title="Swift笔记:从Swift再看ARC以及循环引用">http://www.whisperkarl.com/2016/06/15/Swift笔记-从Swift再看ARC以及循环引用/</a>
+            <span class="copy-path" data-clipboard-text="原文: http://www.whisperkarl.com/2016/06/15/Swift笔记-从Swift再看ARC以及循环引用/　　作者: Karl" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+            <script> var clipboard = new Clipboard('.copy-path'); </script>
+        </p>
+        <p>
+            <span>许可协议:</span><i class="fa fa-creative-commons"></i> <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" title="CC BY-NC-SA 4.0 International" target = "_blank">"署名-非商用-相同方式共享 4.0"</a> 转载请保留原文链接及作者。
+        </p>
+    </div>
+
+
+
+    <nav id="article-nav">
+        
+            <div id="article-nav-newer" class="article-nav-title">
+                <a href="/2016/06/29/解决自定义导航栏导致系统导航栏消失的问题/">
+                    解决自定义导航栏导致系统导航栏消失的问题
+                </a>
+            </div>
+        
+        
+            <div id="article-nav-older" class="article-nav-title">
+                <a href="/2016/05/25/Swift笔记-关于init的总结/">
+                    Swift笔记:关于init的总结
+                </a>
+            </div>
+        
+    </nav>
+
+  
+</article>
+
+
+
+    
+<div class="share">
+    
+        <div class="bdsharebuttonbox">
+            <a href="#" class="fa fa-twitter bds_twi" data-cmd="twi" title="分享到推特"></a>
+            <a href="#" class="fa fa-weibo bds_tsina" data-cmd="tsina" title="分享到新浪微博"></a>
+            <a href="#" class="fa fa-qq bds_sqq" data-cmd="sqq" title="分享给 QQ 好友"></a>
+            <a href="#" class="fa fa-files-o bds_copy" data-cmd="copy" title="复制网址"></a>
+            <a href="#" class="fa fa fa-envelope-o bds_mail" data-cmd="mail" title="通过邮件分享"></a>
+            <a href="#" class="fa fa-weixin bds_weixin" data-cmd="weixin" title="生成文章二维码"></a>
+            <a href="#" class="fa fa-share-alt bds_more" data-cmd="more"></i></a>
+        </div>
+        <script>
+            window._bd_share_config={
+                "common":{"bdSnsKey":{},"bdText":"Swift笔记:从Swift再看ARC以及循环引用　| Karl的开发随笔　","bdMini":"2","bdMiniList":false,"bdPic":"","bdStyle":"0","bdSize":"24"},"share":{}};with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];
+        </script>
+    
+
+    
+</div>
+
+
+
+
+
+
+
+    
+      <div class="duoshuo" id="comments">
+    <div id="comment-box" ></div>
+    <div class="ds-thread" id="ds-thread" data-thread-key="2016/06/15/Swift笔记-从Swift再看ARC以及循环引用/" data-title="Swift笔记:从Swift再看ARC以及循环引用" data-url="http://www.whisperkarl.com/2016/06/15/Swift笔记-从Swift再看ARC以及循环引用/"></div>
+    <script>
+        var duoshuoQuery = {short_name:"whisperkarl"};
+        var loadComment = function(){
+            var d = document, s = d.createElement('script');
+            s.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+            s.async = true; s.charset = 'UTF-8';
+            (d.head || d.body).appendChild(s);
+        }
+
+        
+    </script>
+    
+    <script> loadComment(); </script>
+
+</div>
+    
+
+
+
+
+    <div class="scroll" id="post-nav-button">
+        
+            <a href="/2016/06/29/解决自定义导航栏导致系统导航栏消失的问题/" title="上一篇: 解决自定义导航栏导致系统导航栏消失的问题">
+                <i class="fa fa-angle-left"></i>
+            </a>
+        
+
+        <a title="文章列表"><i class="fa fa-bars"></i><i class="fa fa-times"></i></a>
+
+        
+            <a href="/2016/05/25/Swift笔记-关于init的总结/" title="下一篇: Swift笔记:关于init的总结">
+                <i class="fa fa-angle-right"></i>
+            </a>
+        
+    </div>
+
+    <ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2018/07/11/窥探KVO本质/">窥探KVO本质</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/12/SDWebImage源码（四）——SDWebImageManager/">SDWebImage源码（四）——SDWebImageManager</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/10/SDWebImage源码（三）——SDWebImageDownloader下载器/">SDWebImage源码（三）——SDWebImageDownloader下载器</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/09/SDWebImage源码（二）——SDImageCache缓存器/">SDWebImage源码（二）——SDImageCache缓存器</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/08/SDWebImage源码（一）——SDWebImage概览/">SDWebImage源码（一）——SDWebImage概览</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/11/22/iOS-AutoLayout约束的优先级/">iOS AutoLayout约束的优先级</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/09/23/从iOS的事件响应链看TableView为什么不响应touchesBegan/">从iOS的事件响应链看TableView为什么不响应touchesBegan</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/08/22/php基础语法知识/">php基础语法知识</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/08/12/Mac下php开发环境搭建/">Mac下php开发环境搭建</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/07/20/MAC环境下使用hexo-github搭建个人博客/">MAC环境下使用hexo+github搭建个人博客</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/07/19/iOS-自定义转场动画/">iOS 自定义转场动画</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/06/29/解决自定义导航栏导致系统导航栏消失的问题/">解决自定义导航栏导致系统导航栏消失的问题</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/06/15/Swift笔记-从Swift再看ARC以及循环引用/">Swift笔记:从Swift再看ARC以及循环引用</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/05/25/Swift笔记-关于init的总结/">Swift笔记:关于init的总结</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/05/17/Google-Maps-SDK-for-iOS-谷歌地图使用总结/">Google Maps SDK for iOS 谷歌地图使用总结</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/05/17/关于git、github和-gitignore的一些事/">关于git、github和.gitignore的一些事</a></li></ul>
+
+
+
+
+    <script>
+        
+    </script>
+</div>
+      <footer id="footer">
+    <div class="outer">
+        <div id="footer-info">
+            <div class="footer-left">
+                <i class="fa fa-copyright"></i> 
+                2015-2018 Karl
+            </div>
+            <div class="footer-right">
+                <a href="http://hexo.io/" target="_blank" title="快速、简洁且高效的博客框架">Hexo</a>  Theme <a href="https://github.com/MOxFIVE/hexo-theme-yelee" target="_blank" title="简而不减 Hexo 双栏博客主题  v3.5">Yelee</a> by MOxFIVE <i class="fa fa-heart animated infinite pulse"></i>
+            </div>
+        </div>
+        
+            <div class="visit">
+                
+                    <span id="busuanzi_container_site_pv" style='display:none'>
+                        <span id="site-visit" title="本站到访数"><i class="fa fa-user" aria-hidden="true"></i><span id="busuanzi_value_site_uv"></span>
+                        </span>
+                    </span>
+                
+                
+                    <span>| </span>
+                
+                
+                    <span id="busuanzi_container_page_pv" style='display:none'>
+                        <span id="page-visit"  title="本页阅读量"><i class="fa fa-eye animated infinite pulse" aria-hidden="true"></i><span id="busuanzi_value_page_pv"></span>
+                        </span>
+                    </span>
+                
+            </div>
+        
+    </div>
+</footer>
+    </div>
+    
+<script data-main="/js/main.js" src="//cdn.bootcss.com/require.js/2.2.0/require.min.js"></script>
+
+
+
+
+
+<div class="scroll" id="scroll">
+    <a href="#" title="返回顶部"><i class="fa fa-arrow-up"></i></a>
+    <a href="#comments" onclick="load$hide();" title="查看评论"><i class="fa fa-comments-o"></i></a>
+    <a href="#footer" title="转到底部"><i class="fa fa-arrow-down"></i></a>
+</div>
+<script>
+    // Open in New Window
+    
+        var oOpenInNew = {
+            
+            
+            
+            
+            
+            
+             archives: ".archive-article-title", 
+             miniArchives: "a.post-list-link", 
+            
+            
+             socail: ".social a" 
+        }
+        for (var x in oOpenInNew) {
+            $(oOpenInNew[x]).attr("target", "_blank");
+        }
+    
+</script>
+
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+  </div>
+</body>
+</html>

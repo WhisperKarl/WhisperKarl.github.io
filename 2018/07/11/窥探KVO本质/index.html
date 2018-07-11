@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html >
+<head>
+
+    <!--[if lt IE 9]>
+        <style>body {display: none; background: none !important} </style>
+        <meta http-equiv="Refresh" Content="0; url=//outdatedbrowser.com/" />
+    <![endif]-->
+
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="format-detection" content="telephone=no" />
+<meta name="author" content="Karl" />
+
+
+
+<meta name="description" content="KVO的实现方式KVO 是我们日常开发经常用到的技术，关于 KVO 的实现相信大家也都有一定的了解，我们来看下苹果的对于 KVO的描述：  Automatic key-value observing is implemented using a technique called isa-swizzling.The isa pointer, as the name suggests, points">
+<meta name="keywords" content="iOS">
+<meta property="og:type" content="article">
+<meta property="og:title" content="窥探KVO本质">
+<meta property="og:url" content="http://www.whisperkarl.com/2018/07/11/窥探KVO本质/index.html">
+<meta property="og:site_name" content="Karl的开发随笔">
+<meta property="og:description" content="KVO的实现方式KVO 是我们日常开发经常用到的技术，关于 KVO 的实现相信大家也都有一定的了解，我们来看下苹果的对于 KVO的描述：  Automatic key-value observing is implemented using a technique called isa-swizzling.The isa pointer, as the name suggests, points">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/1642800-e89447984e832b68.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/1642800-28b9625aa6514fdd.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:updated_time" content="2018-07-11T02:53:56.862Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="窥探KVO本质">
+<meta name="twitter:description" content="KVO的实现方式KVO 是我们日常开发经常用到的技术，关于 KVO 的实现相信大家也都有一定的了解，我们来看下苹果的对于 KVO的描述：  Automatic key-value observing is implemented using a technique called isa-swizzling.The isa pointer, as the name suggests, points">
+<meta name="twitter:image" content="https://upload-images.jianshu.io/upload_images/1642800-e89447984e832b68.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+
+<link rel="apple-touch-icon" href= "/apple-touch-icon.png">
+
+
+    <link rel="alternate" href="/atom.xml" title="Karl的开发随笔" type="application/atom+xml">
+
+
+
+    <link rel="shortcut icon" href="/favicon.png">
+
+
+
+    <link href="//cdn.bootcss.com/animate.css/3.5.1/animate.min.css" rel="stylesheet">
+
+
+
+    <link href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.min.css" rel="stylesheet">
+
+
+
+    <script src="//cdn.bootcss.com/pace/1.0.2/pace.min.js"></script>
+    <link href="//cdn.bootcss.com/pace/1.0.2/themes/blue/pace-theme-minimal.css" rel="stylesheet">
+
+
+<link rel="stylesheet" href="/css/style.css">
+
+
+
+<link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+
+
+<title>窥探KVO本质 | Karl的开发随笔</title>
+
+<script src="//cdn.bootcss.com/jquery/2.2.4/jquery.min.js"></script>
+<script src="//cdn.bootcss.com/clipboard.js/1.5.10/clipboard.min.js"></script>
+
+<script>
+    var yiliaConfig = {
+        fancybox: true,
+        animate: true,
+        isHome: false,
+        isPost: true,
+        isArchive: false,
+        isTag: false,
+        isCategory: false,
+        fancybox_js: "//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.min.js",
+        scrollreveal: "//cdn.bootcss.com/scrollReveal.js/3.1.4/scrollreveal.min.js",
+        search: undefined
+    }
+</script>
+
+
+    <script>
+        yiliaConfig.jquery_ui = [true, "//cdn.bootcss.com/jqueryui/1.10.4/jquery-ui.min.js", "//cdn.bootcss.com/jqueryui/1.10.4/css/jquery-ui.min.css"];
+    </script>
+
+
+
+    <script> yiliaConfig.rootUrl = "\/";</script>
+
+
+
+
+
+
+</head>
+<body>
+  <div id="container">
+    <div class="left-col">
+    <div class="overlay"></div>
+<div class="intrude-less">
+    <header id="header" class="inner">
+        <a href="/" class="profilepic">
+            <img src="/img/avatar.png" class="animated zoomIn">
+        </a>
+        <hgroup>
+          <h1 class="header-author"><a href="/">Karl</a></h1>
+        </hgroup>
+
+        
+        <p class="header-subtitle">一个程序员的自我修行</p>
+        
+
+        
+
+
+        
+
+        <div id="switch-area" class="switch-area">
+            <div class="switch-wrap">
+                <section class="switch-part switch-part1">
+                    <nav class="header-menu">
+                        <ul>
+                        
+                            <li><a href="/">主页</a></li>
+                        
+                            <li><a href="/archives/">所有文章</a></li>
+                        
+                            <li><a href="/tags/">标签云</a></li>
+                        
+                            <li><a href="/about/">关于我</a></li>
+                        
+                        </ul>
+                    </nav>
+                    <nav class="header-nav">
+                        <ul class="social">
+                            
+                                <a class="fa 新浪微博" href="http://weibo.com/1659245264/profile?rightmod=1&wvr=6&mod=personinfo&is_all=1" title="新浪微博"></a>
+                            
+                                <a class="fa GitHub" href="https://github.com/WhisperKarl" title="GitHub"></a>
+                            
+                                <a class="fa 简书" href="http://www.jianshu.com/users/d6b23f5aa337/latest_articles" title="简书"></a>
+                            
+                        </ul>
+                    </nav>
+                </section>
+                
+                
+                
+                
+                <section class="switch-part switch-part3">
+                    <div id="js-friends">
+                    
+                      <a class="main-nav-link switch-friends-link" href="https://hexo.io">Hexo</a>
+                    
+                      <a class="main-nav-link switch-friends-link" href="https://pages.github.com/">GitHub</a>
+                    
+                      <a class="main-nav-link switch-friends-link" href="http://moxfive.xyz/">MOxFIVE</a>
+                    
+                    </div>
+                </section>
+                
+
+                
+            </div>
+        </div>
+    </header>                
+</div>
+    </div>
+    <div class="mid-col">
+      <nav id="mobile-nav">
+      <div class="overlay">
+          <div class="slider-trigger"></div>
+          <h1 class="header-author js-mobile-header hide"><a href="/" title="回到主页">Karl</a></h1>
+      </div>
+    <div class="intrude-less">
+        <header id="header" class="inner">
+            <a href="/" class="profilepic">
+                <img src="/img/avatar.png" class="animated zoomIn">
+            </a>
+            <hgroup>
+              <h1 class="header-author"><a href="/" title="回到主页">Karl</a></h1>
+            </hgroup>
+            
+            <p class="header-subtitle">一个程序员的自我修行</p>
+            
+            <nav class="header-menu">
+                <ul>
+                
+                    <li><a href="/">主页</a></li>
+                
+                    <li><a href="/archives/">所有文章</a></li>
+                
+                    <li><a href="/tags/">标签云</a></li>
+                
+                    <li><a href="/about/">关于我</a></li>
+                
+                <div class="clearfix"></div>
+                </ul>
+            </nav>
+            <nav class="header-nav">
+                        <ul class="social">
+                            
+                                <a class="fa 新浪微博" target="_blank" href="http://weibo.com/1659245264/profile?rightmod=1&wvr=6&mod=personinfo&is_all=1" title="新浪微博"></a>
+                            
+                                <a class="fa GitHub" target="_blank" href="https://github.com/WhisperKarl" title="GitHub"></a>
+                            
+                                <a class="fa 简书" target="_blank" href="http://www.jianshu.com/users/d6b23f5aa337/latest_articles" title="简书"></a>
+                            
+                        </ul>
+            </nav>
+        </header>                
+    </div>
+    <link class="menu-list" tags="标签" friends="友情链接" about="关于我"/>
+</nav>
+      <div class="body-wrap"><article id="post-窥探KVO本质" class="article article-type-post" itemscope itemprop="blogPost">
+  
+    <div class="article-meta">
+      <a href="/2018/07/11/窥探KVO本质/" class="article-date">
+      <time datetime="2018-07-11T02:48:36.000Z" itemprop="datePublished">2018-07-11</time>
+</a>
+
+
+    </div>
+  
+  <div class="article-inner">
+    
+      <input type="hidden" class="isFancy" />
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      窥探KVO本质
+    </h1>
+  
+
+      </header>
+      
+      <div class="article-info article-info-post">
+        
+    <div class="article-category tagcloud">
+    <a class="article-category-link" href="/categories/programming/">编程</a>
+    </div>
+
+
+        
+    <div class="article-tag tagcloud">
+        <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/iOS/">iOS</a></li></ul>
+    </div>
+
+        <div class="clearfix"></div>
+      </div>
+      
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+          
+        <h3 id="KVO的实现方式"><a href="#KVO的实现方式" class="headerlink" title="KVO的实现方式"></a>KVO的实现方式</h3><p><code>KVO</code> 是我们日常开发经常用到的技术，关于 <code>KVO</code> 的实现相信大家也都有一定的了解，我们来看下苹果的对于 <a href="https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/KeyValueObserving/Articles/KVOImplementation.html" target="_blank" rel="external">KVO</a>的描述：</p>
+<blockquote>
+<p>Automatic key-value observing is implemented using a technique called <em>isa-swizzling</em>.<br>The <code>isa</code> pointer, as the name suggests, points to the object’s class which maintains a dispatch table. This dispatch table essentially contains pointers to the methods the class implements, among other data.<br>When an observer is registered for an attribute of an object the isa pointer of the observed object is modified, pointing to an intermediate class rather than at the true class. As a result the value of the isa pointer does not necessarily reflect the actual class of the instance.<br>You should never rely on the <code>isa</code> pointer to determine class membership. Instead, you should use the   <a href="https://developer.apple.com/library/archive/documentation/LegacyTechnologies/WebObjects/WebObjects_3.5/Reference/Frameworks/ObjC/Foundation/Protocols/NSObject/Description.html#//apple_ref/occ/intfm/NSObject/class" target="_blank" rel="external">class</a>  method to determine the class of an object instance.</p>
+</blockquote>
+<a id="more"></a>
+<p>简单说就是苹果利用了<code>isa-swizzling</code>(isa 欺诈)技术，替换了实例对象的<code>isa</code>指针。当实例对象的某个属性被注册监听后，实例对象的<code>isa</code>指针将指向一个临时创建的类，而不是真正的类对象，新创建的类将重写setter方法，从而实现触发通知。由于<code>isa</code>指针没有指向真正的类对象，因此通过<code>object_getClass</code>(即isa指针)方法获取到的类对象将是错误的，因此苹果建议使用<code>[Object class]</code>方法获取实例的类对象。</p>
+<h3 id="代码验证"><a href="#代码验证" class="headerlink" title="代码验证"></a>代码验证</h3><p>下面我们通过简单的代码验证一下以上过程。<br>首先我们创建一个简单的<code>Person</code>对象，有一个<code>age</code>属性：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">@interface Person</div><div class="line">@property (nonatomic, assign) int age;</div><div class="line">@end</div><div class="line"></div><div class="line">@implementation Person</div><div class="line"></div><div class="line">-(void)setAge:(int)age&#123;</div><div class="line">_age = age;</div><div class="line">&#125;</div><div class="line">@end</div></pre></td></tr></table></figure></p>
+<p>声明两个Person属性，并给person1对象添加KVO监听：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">self.person1 = [[Person alloc] init];</div><div class="line">self.person2 = [[Person alloc] init];   </div><div class="line">[self.person1 addObserver:self forKeyPath:@&quot;age&quot; options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld context:nil];</div></pre></td></tr></table></figure></p>
+<p>这时候我们打个断点，打印一下两个person对象的isa指针:<br><img src="https://upload-images.jianshu.io/upload_images/1642800-e89447984e832b68.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="打印 isa 指针"><br>通过控制台打印信息我们可以明确的看到，添加了KVO监听的<code>person1</code>的<code>isa</code>指针指向了一个叫做<code>NSKVONotifying_Person</code>的类，而没有添加监听的<code>person2</code>的<code>isa</code>指向的是<code>Person</code>类，这就说明添加KVO以后，实例对象的<code>isa</code>指针确实被替换了。</p>
+<p>另外，我们可以猜测<code>NSKVONotifying_Person</code>类应该是重写了<code>setter</code>方法，从而在属性改变的时候发出通知，我们可以打印一下<code>setAge:</code>的<code>IMP</code>：<br><img src="https://upload-images.jianshu.io/upload_images/1642800-28b9625aa6514fdd.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="打印 IMP"><br>通过打印信息我们可以很明确的的知道，在添加KVO监听以后，<code>setAge:</code>方法被替换为了<code>_NSSetIntValueAndNotify</code>，通过方法名我们可以猜测，这个方法的作用就是设置属性值并发出通知。</p>
+<p>这样我们就可以初步证明了 KVO 的触发机制。即修改<code>isa</code>指针，只想一个新生成的类<code>NSKVONotifying_XXX</code>，并修改这个类的 setter 方法为<code>_NSSetXXXValueAndNotify</code>，从而发出通知。</p>
+<h3 id="KVO-的触发流程"><a href="#KVO-的触发流程" class="headerlink" title="KVO 的触发流程"></a>KVO 的触发流程</h3><p>我们知道如果想手动触发 KVO，需要先调用<code>willChangeValueForKey:</code>再调用<code>didChangeValueForKey:</code>，我们来验证下是不是这样：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line">#import &quot;Person.h&quot;</div><div class="line"></div><div class="line">@implementation Person</div><div class="line"></div><div class="line">- (void)setAge:(int)age&#123;</div><div class="line">_age = age;</div><div class="line">&#125;</div><div class="line"></div><div class="line">- (void)willChangeValueForKey:(NSString *)key&#123;</div><div class="line">[super willChangeValueForKey:key];</div><div class="line">NSLog(@&quot;will change key : %@&quot;,key);</div><div class="line">&#125;</div><div class="line"></div><div class="line">- (void)didChangeValueForKey:(NSString *)key&#123;</div><div class="line">NSLog(@&quot;did change key : %@ --begin&quot;,key);</div><div class="line">[super didChangeValueForKey:key];</div><div class="line">NSLog(@&quot;did change key : %@ --end&quot;,key);</div><div class="line">&#125;</div><div class="line">@end</div></pre></td></tr></table></figure></p>
+<p>运行程序，我们可以得到以下打印信息：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">KVO[80799:10056110] will change key : age</div><div class="line">KVO[80799:10056110] did change key : age --begin</div><div class="line">KVO[80799:10056110] age-&lt;Person: 0x600000013f40&gt;-&#123;</div><div class="line">kind = 1;</div><div class="line">new = 1;</div><div class="line">old = 11;</div><div class="line">&#125;</div><div class="line">KVO[80799:10056110] did change key : age --end</div></pre></td></tr></table></figure></p>
+<p>和我们预想的一样，派生类的 setter 方法的确调用了这两个方法。这里还有一个需要注意的是，如果我们不调用<code>super</code>方法，将不会触发通知，这也证明了 KVO 通知的发出确实是依赖这两个方法的调用。</p>
+<h3 id="NSKVONotifying-Person-的结构"><a href="#NSKVONotifying-Person-的结构" class="headerlink" title="NSKVONotifying_Person 的结构"></a>NSKVONotifying_Person 的结构</h3><p>KVO 的派生类也是 Class 类型，因此也遵循 <code>objc_class</code>的结构：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">struct objc_class : objc_object &#123;</div><div class="line">// Class ISA;</div><div class="line">Class superclass;</div><div class="line">cache_t cache;             // formerly cache pointer and vtable</div><div class="line">class_data_bits_t bits;    // class_rw_t * plus custom rr/alloc flags</div><div class="line">class_rw_t *data();</div><div class="line">……</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>而我们熟知的 methodList、propertyList 等信息都储存在<code>class_rw_t</code>类型的<code>data</code> 变量中：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">struct class_rw_t &#123;</div><div class="line">// Be warned that Symbolication knows the layout of this structure.</div><div class="line">uint32_t flags;</div><div class="line">uint32_t version;</div><div class="line">const class_ro_t *ro;</div><div class="line">method_array_t methods;</div><div class="line">property_array_t properties;</div><div class="line">protocol_array_t protocols;</div><div class="line">……</div></pre></td></tr></table></figure></p>
+<p>对于这块知识这里不做详细说明，我们继续看<code>NSKVONotifying_Person</code>都储存了哪些信息，我们先来打印一下它的 <code>superClass</code>:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">(lldb) p class_getSuperclass(object_getClass(self.person1))</div><div class="line">(Class) $11 = Person</div><div class="line">(lldb)</div></pre></td></tr></table></figure></p>
+<p>这里我们可以看到 KVO 派生类的 类对象的 <code>superClass</code>指针指向的是原来的类对象，即KVO 生成的类对象是原来类对象的子类。<br>另外我们可以通过<code>class_copyMethodList</code>来看一下这个派生类实现了哪些对象方法，我们直接看结果：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">KVO[80860:10060358] NSKVONotifying_Person setAge:, class, dealloc, _isKVOA,</div></pre></td></tr></table></figure></p>
+<p><code>setAge:</code>即是重写的<code>setter</code>方法<br><code>class</code>  方法是为了返回正确的类对象，即本文开头介绍的苹果推荐的通过<code>class</code>方法获取类对象，以免发生不必要的麻烦<br><code>dealloc</code> 大概是在对象销毁时做一些释放操作<br><code>_isKVOA</code> 大概是为了判断是不是 KVO 生成的派生类</p>
+<p>至此我们用代码验证了 KVO 的实现方式。</p>
+
+      
+    </div>
+    
+  </div>
+  
+    
+    <div class="copyright">
+        <p><span>本文标题:</span><a href="/2018/07/11/窥探KVO本质/">窥探KVO本质</a></p>
+        <p><span>文章作者:</span><a href="/" title="回到主页">Karl</a></p>
+        <p><span>发布时间:</span>2018-07-11, 10:48:36</p>
+        <p><span>最后更新:</span>2018-07-11, 10:53:56</p>
+        <p>
+            <span>原始链接:</span><a class="post-url" href="/2018/07/11/窥探KVO本质/" title="窥探KVO本质">http://www.whisperkarl.com/2018/07/11/窥探KVO本质/</a>
+            <span class="copy-path" data-clipboard-text="原文: http://www.whisperkarl.com/2018/07/11/窥探KVO本质/　　作者: Karl" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+            <script> var clipboard = new Clipboard('.copy-path'); </script>
+        </p>
+        <p>
+            <span>许可协议:</span><i class="fa fa-creative-commons"></i> <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" title="CC BY-NC-SA 4.0 International" target = "_blank">"署名-非商用-相同方式共享 4.0"</a> 转载请保留原文链接及作者。
+        </p>
+    </div>
+
+
+
+    <nav id="article-nav">
+        
+        
+            <div id="article-nav-older" class="article-nav-title">
+                <a href="/2016/12/12/SDWebImage源码（四）——SDWebImageManager/">
+                    SDWebImage源码（四）——SDWebImageManager
+                </a>
+            </div>
+        
+    </nav>
+
+  
+</article>
+
+
+
+    
+<div class="share">
+    
+        <div class="bdsharebuttonbox">
+            <a href="#" class="fa fa-twitter bds_twi" data-cmd="twi" title="分享到推特"></a>
+            <a href="#" class="fa fa-weibo bds_tsina" data-cmd="tsina" title="分享到新浪微博"></a>
+            <a href="#" class="fa fa-qq bds_sqq" data-cmd="sqq" title="分享给 QQ 好友"></a>
+            <a href="#" class="fa fa-files-o bds_copy" data-cmd="copy" title="复制网址"></a>
+            <a href="#" class="fa fa fa-envelope-o bds_mail" data-cmd="mail" title="通过邮件分享"></a>
+            <a href="#" class="fa fa-weixin bds_weixin" data-cmd="weixin" title="生成文章二维码"></a>
+            <a href="#" class="fa fa-share-alt bds_more" data-cmd="more"></i></a>
+        </div>
+        <script>
+            window._bd_share_config={
+                "common":{"bdSnsKey":{},"bdText":"窥探KVO本质　| Karl的开发随笔　","bdMini":"2","bdMiniList":false,"bdPic":"","bdStyle":"0","bdSize":"24"},"share":{}};with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];
+        </script>
+    
+
+    
+</div>
+
+
+
+
+
+
+
+    
+      <div class="duoshuo" id="comments">
+    <div id="comment-box" ></div>
+    <div class="ds-thread" id="ds-thread" data-thread-key="2018/07/11/窥探KVO本质/" data-title="窥探KVO本质" data-url="http://www.whisperkarl.com/2018/07/11/窥探KVO本质/"></div>
+    <script>
+        var duoshuoQuery = {short_name:"whisperkarl"};
+        var loadComment = function(){
+            var d = document, s = d.createElement('script');
+            s.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+            s.async = true; s.charset = 'UTF-8';
+            (d.head || d.body).appendChild(s);
+        }
+
+        
+    </script>
+    
+    <script> loadComment(); </script>
+
+</div>
+    
+
+
+
+
+    <div class="scroll" id="post-nav-button">
+        
+            <a href="/" title="回到主页"><i class="fa fa-home"></i></a>
+        
+
+        <a title="文章列表"><i class="fa fa-bars"></i><i class="fa fa-times"></i></a>
+
+        
+            <a href="/2016/12/12/SDWebImage源码（四）——SDWebImageManager/" title="下一篇: SDWebImage源码（四）——SDWebImageManager">
+                <i class="fa fa-angle-right"></i>
+            </a>
+        
+    </div>
+
+    <ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2018/07/11/窥探KVO本质/">窥探KVO本质</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/12/SDWebImage源码（四）——SDWebImageManager/">SDWebImage源码（四）——SDWebImageManager</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/10/SDWebImage源码（三）——SDWebImageDownloader下载器/">SDWebImage源码（三）——SDWebImageDownloader下载器</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/09/SDWebImage源码（二）——SDImageCache缓存器/">SDWebImage源码（二）——SDImageCache缓存器</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/08/SDWebImage源码（一）——SDWebImage概览/">SDWebImage源码（一）——SDWebImage概览</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/11/22/iOS-AutoLayout约束的优先级/">iOS AutoLayout约束的优先级</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/09/23/从iOS的事件响应链看TableView为什么不响应touchesBegan/">从iOS的事件响应链看TableView为什么不响应touchesBegan</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/08/22/php基础语法知识/">php基础语法知识</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/08/12/Mac下php开发环境搭建/">Mac下php开发环境搭建</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/07/20/MAC环境下使用hexo-github搭建个人博客/">MAC环境下使用hexo+github搭建个人博客</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/07/19/iOS-自定义转场动画/">iOS 自定义转场动画</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/06/29/解决自定义导航栏导致系统导航栏消失的问题/">解决自定义导航栏导致系统导航栏消失的问题</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/06/15/Swift笔记-从Swift再看ARC以及循环引用/">Swift笔记:从Swift再看ARC以及循环引用</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/05/25/Swift笔记-关于init的总结/">Swift笔记:关于init的总结</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/05/17/Google-Maps-SDK-for-iOS-谷歌地图使用总结/">Google Maps SDK for iOS 谷歌地图使用总结</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/05/17/关于git、github和-gitignore的一些事/">关于git、github和.gitignore的一些事</a></li></ul>
+
+
+
+
+    <script>
+        
+    </script>
+</div>
+      <footer id="footer">
+    <div class="outer">
+        <div id="footer-info">
+            <div class="footer-left">
+                <i class="fa fa-copyright"></i> 
+                2015-2018 Karl
+            </div>
+            <div class="footer-right">
+                <a href="http://hexo.io/" target="_blank" title="快速、简洁且高效的博客框架">Hexo</a>  Theme <a href="https://github.com/MOxFIVE/hexo-theme-yelee" target="_blank" title="简而不减 Hexo 双栏博客主题  v3.5">Yelee</a> by MOxFIVE <i class="fa fa-heart animated infinite pulse"></i>
+            </div>
+        </div>
+        
+            <div class="visit">
+                
+                    <span id="busuanzi_container_site_pv" style='display:none'>
+                        <span id="site-visit" title="本站到访数"><i class="fa fa-user" aria-hidden="true"></i><span id="busuanzi_value_site_uv"></span>
+                        </span>
+                    </span>
+                
+                
+                    <span>| </span>
+                
+                
+                    <span id="busuanzi_container_page_pv" style='display:none'>
+                        <span id="page-visit"  title="本页阅读量"><i class="fa fa-eye animated infinite pulse" aria-hidden="true"></i><span id="busuanzi_value_page_pv"></span>
+                        </span>
+                    </span>
+                
+            </div>
+        
+    </div>
+</footer>
+    </div>
+    
+<script data-main="/js/main.js" src="//cdn.bootcss.com/require.js/2.2.0/require.min.js"></script>
+
+
+
+
+
+<div class="scroll" id="scroll">
+    <a href="#" title="返回顶部"><i class="fa fa-arrow-up"></i></a>
+    <a href="#comments" onclick="load$hide();" title="查看评论"><i class="fa fa-comments-o"></i></a>
+    <a href="#footer" title="转到底部"><i class="fa fa-arrow-down"></i></a>
+</div>
+<script>
+    // Open in New Window
+    
+        var oOpenInNew = {
+            
+            
+            
+            
+            
+            
+             archives: ".archive-article-title", 
+             miniArchives: "a.post-list-link", 
+            
+            
+             socail: ".social a" 
+        }
+        for (var x in oOpenInNew) {
+            $(oOpenInNew[x]).attr("target", "_blank");
+        }
+    
+</script>
+
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+  </div>
+</body>
+</html>
